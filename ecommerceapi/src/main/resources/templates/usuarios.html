@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Usuários - Sistema de E-commerce</title>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Carregando...</span>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div th:replace="~{sidebar :: sidebar('usuarios')}"></div>
+
+        <!-- Conteúdo Principal -->
+        <div class="col-md-9 col-lg-10 content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Gestão de Usuários</h2>
+                <button class="btn btn-primary" onclick="abrirModalCadastro()">
+                    <i class="bi bi-plus-circle me-2"></i>Novo Usuário
+                </button>
+            </div>
+
+            <!-- Filtros e busca -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <input type="text" id="filtroNome" class="form-control" placeholder="Buscar por nome...">
+                                <button class="btn btn-outline-secondary" type="button" onclick="buscarUsuarios()">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-secondary w-100" onclick="limparFiltros()">
+                                Limpar Filtros
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela de Usuários -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nome</th>
+                                <th>Email</th>
+                                <th>CPF</th>
+                                <th>Grupo</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                            </thead>
+                            <tbody id="tabelaUsuarios">
+                            <!-- Dados serão carregados via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Paginação -->
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div>
+                            <span id="informacaoPaginacao">Exibindo 0 de 0 registros</span>
+                        </div>
+                        <nav>
+                            <ul class="pagination" id="paginacao">
+                                <!-- Paginação será gerada via JavaScript -->
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Cadastro/Edição -->
+<div class="modal fade" id="modalUsuario" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tituloModal">Novo Usuário</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formUsuario">
+                    <input type="hidden" id="usuarioId">
+
+                    <div class="mb-3">
+                        <label for="nome" class="form-label">Nome</label>
+                        <input type="text" class="form-control" id="nome" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" required>
+                        <div class="form-text">O email será usado para login no sistema.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="cpf" class="form-label">CPF</label>
+                        <input type="text" class="form-control" id="cpf" required maxlength="14">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="grupo" class="form-label">Grupo</label>
+                        <select class="form-select" id="grupo" required>
+                            <option value="ADMIN">Administrador</option>
+                            <option value="ESTOQUISTA">Estoquista</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="senha" class="form-label">Senha</label>
+                        <input type="password" class="form-control" id="senha" required minlength="6">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="confirmarSenha" class="form-label">Confirmar Senha</label>
+                        <input type="password" class="form-control" id="confirmarSenha" required minlength="6">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="salvarUsuario()">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação -->
+<div class="modal fade" id="modalConfirmacao" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmação</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p id="mensagemConfirmacao">Tem certeza que deseja realizar esta ação?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmar">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/static/js/csrf-token.js"></script>
+<script>
+    // Variáveis globais
+        let paginaAtual = 0;
+        let tamanhoPagina = 10;
+        let totalPaginas = 0;
+        let totalElementos = 0;
+        let modalUsuario = null;
+        let modalConfirmacao = null;
+        let usuarioAtual = null;
+
+        // Quando o documento estiver pronto
+        window.addEventListener('DOMContentLoaded', function() {
+            // Inicializar modais Bootstrap
+            modalUsuario = new bootstrap.Modal(document.getElementById('modalUsuario'));
+            modalConfirmacao = new bootstrap.Modal(document.getElementById('modalConfirmacao'));
+
+            // Configurar máscara para CPF
+            document.getElementById('cpf').addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length <= 11) {
+                    value = value.replace(/(\d{3})(\d)/, "$1.$2");
+                    value = value.replace(/(\d{3})(\d)/, "$1.$2");
+                    value = value.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+                }
+                e.target.value = value;
+            });
+
+            // Carregar informações do usuário logado
+            carregarInfoUsuario();
+
+            // Carregar lista de usuários
+            buscarUsuarios();
+        });
+
+        // Função para carregar informações do usuário logado
+        function carregarInfoUsuario() {
+            fetch('/api/auth/user-info')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('usuarioLogado').textContent = data.email;
+
+                    const roles = data.roles.map(role => role.authority.replace('ROLE_', '')).join(', ');
+                    document.getElementById('grupoUsuario').textContent = roles;
+
+                    // Verificar permissões
+                    if (!data.roles.some(role => role.authority === 'ROLE_ADMIN')) {
+                        window.location.href = '/dashboard';
+                    }
+
+                    usuarioAtual = data.email;
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar informações do usuário:', error);
+                });
+        }
+
+        // Função para buscar usuários com paginação e filtros
+        function buscarUsuarios() {
+            mostrarLoading(true);
+
+            let url = `/api/usuarios?page=${paginaAtual}&size=${tamanhoPagina}`;
+
+            const filtroNome = document.getElementById('filtroNome').value;
+            if (filtroNome) {
+                url += `&nome=${encodeURIComponent(filtroNome)}`;
+            }
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    renderizarTabela(data.content);
+                    atualizarPaginacao(data);
+                })
+                .catch(error => {
+                    console.error('Erro ao buscar usuários:', error);
+                    alert('Erro ao carregar usuários. Por favor, tente novamente.');
+                })
+                .finally(() => {
+                    mostrarLoading(false);
+                });
+        }
+
+        // Função para renderizar a tabela de usuários
+        function renderizarTabela(usuarios) {
+            const tbody = document.getElementById('tabelaUsuarios');
+            tbody.innerHTML = '';
+
+            if (usuarios.length === 0) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td colspan="7" class="text-center">Nenhum usuário encontrado</td>';
+                tbody.appendChild(tr);
+                return;
+            }
+
+            usuarios.forEach(usuario => {
+                const tr = document.createElement('tr');
+
+                // Status do usuário
+                const statusBadge = usuario.ativo
+                    ? '<span class="badge bg-success status-badge">Ativo</span>'
+                    : '<span class="badge bg-danger status-badge">Inativo</span>';
+
+                // Botão de status (alternar ativo/inativo)
+                const btnStatus = usuario.ativo
+                    ? `<button class="btn btn-sm btn-outline-danger" onclick="confirmarAlterarStatus(${usuario.id}, false)" ${usuarioAtual === usuario.email ? 'disabled' : ''}>Desativar</button>`
+                    : `<button class="btn btn-sm btn-outline-success" onclick="confirmarAlterarStatus(${usuario.id}, true)" ${usuarioAtual === usuario.email ? 'disabled' : ''}>Ativar</button>`;
+
+                tr.innerHTML = `
+                    <td>${usuario.id}</td>
+                    <td>${usuario.nome}</td>
+                    <td>${usuario.email}</td>
+                    <td>${usuario.cpf}</td>
+                    <td>${traduzirGrupo(usuario.grupo)}</td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editarUsuario(${usuario.id})">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        ${btnStatus}
+                    </td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Função para atualizar informações de paginação
+        function atualizarPaginacao(data) {
+            paginaAtual = data.number;
+            totalPaginas = data.totalPages;
+            totalElementos = data.totalElements;
+
+            // Atualizar texto informativo
+            const inicio = paginaAtual * tamanhoPagina + 1;
+            const fim = Math.min((paginaAtual + 1) * tamanhoPagina, totalElementos);
+
+            document.getElementById('informacaoPaginacao').textContent =
+                `Exibindo ${inicio}-${fim} de ${totalElementos} registros`;
+
+            // Gerar links de paginação
+            const paginacao = document.getElementById('paginacao');
+            paginacao.innerHTML = '';
+
+            // Botão anterior
+            const liAnterior = document.createElement('li');
+            liAnterior.className = `page-item ${paginaAtual === 0 ? 'disabled' : ''}`;
+            liAnterior.innerHTML = `
+                <a class="page-link" href="#" onclick="irParaPagina(${paginaAtual - 1}); return false;">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            `;
+            paginacao.appendChild(liAnterior);
+
+            // Páginas
+            let inicio_paginas = Math.max(0, paginaAtual - 2);
+            let fim_paginas = Math.min(totalPaginas - 1, paginaAtual + 2);
+
+            for (let i = inicio_paginas; i <= fim_paginas; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === paginaAtual ? 'active' : ''}`;
+                li.innerHTML = `
+                    <a class="page-link" href="#" onclick="irParaPagina(${i}); return false;">
+                        ${i + 1}
+                    </a>
+                `;
+                paginacao.appendChild(li);
+            }
+
+            // Botão próximo
+            const liProximo = document.createElement('li');
+            liProximo.className = `page-item ${paginaAtual === totalPaginas - 1 ? 'disabled' : ''}`;
+            liProximo.innerHTML = `
+                <a class="page-link" href="#" onclick="irParaPagina(${paginaAtual + 1}); return false;">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            `;
+            paginacao.appendChild(liProximo);
+        }
+
+        // Função para ir para uma página específica
+        function irParaPagina(pagina) {
+            if (pagina < 0 || pagina >= totalPaginas) return;
+
+            paginaAtual = pagina;
+            buscarUsuarios();
+        }
+
+        // Função para limpar filtros
+        function limparFiltros() {
+            document.getElementById('filtroNome').value = '';
+            paginaAtual = 0;
+            buscarUsuarios();
+        }
+
+        // Função para abrir modal de cadastro
+        function abrirModalCadastro() {
+            document.getElementById('tituloModal').textContent = 'Novo Usuário';
+            document.getElementById('formUsuario').reset();
+            document.getElementById('usuarioId').value = '';
+            document.getElementById('email').disabled = false;
+            document.getElementById('senha').required = true;
+            document.getElementById('confirmarSenha').required = true;
+
+            modalUsuario.show();
+        }
+
+        // Função para editar usuário
+        function editarUsuario(id) {
+            mostrarLoading(true);
+
+            fetch(`/api/usuarios/${id}`)
+                .then(response => response.json())
+                .then(usuario => {
+                    document.getElementById('tituloModal').textContent = 'Editar Usuário';
+                    document.getElementById('usuarioId').value = usuario.id;
+                    document.getElementById('nome').value = usuario.nome;
+                    document.getElementById('email').value = usuario.email;
+                    document.getElementById('email').disabled = true;
+                    document.getElementById('cpf').value = usuario.cpf;
+                    document.getElementById('grupo').value = usuario.grupo;
+
+                    // Campos de senha não são obrigatórios na edição
+                    document.getElementById('senha').required = false;
+                    document.getElementById('confirmarSenha').required = false;
+                    document.getElementById('senha').value = '';
+                    document.getElementById('confirmarSenha').value = '';
+
+                    // Desabilitar alteração de grupo para o próprio usuário
+                    if (usuarioAtual === usuario.email) {
+                        document.getElementById('grupo').disabled = true;
+                    } else {
+                        document.getElementById('grupo').disabled = false;
+                    }
+
+                    modalUsuario.show();
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar usuário:', error);
+                    alert('Erro ao carregar dados do usuário. Por favor, tente novamente.');
+                })
+                .finally(() => {
+                    mostrarLoading(false);
+                });
+        }
+
+        // Função para salvar usuário (criar ou atualizar)
+        function salvarUsuario() {
+            // Validar formulário
+            const form = document.getElementById('formUsuario');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            // Validar senhas
+            const senha = document.getElementById('senha').value;
+            const confirmarSenha = document.getElementById('confirmarSenha').value;
+
+            if (senha && senha !== confirmarSenha) {
+                alert('As senhas não conferem!');
+                return;
+            }
+
+            // Coletar dados do formulário
+            const id = document.getElementById('usuarioId').value;
+            const usuarioDTO = {
+                nome: document.getElementById('nome').value,
+                email: document.getElementById('email').value,
+                cpf: document.getElementById('cpf').value.replace(/\D/g, ''),
+                grupo: document.getElementById('grupo').value,
+                senha: senha,
+                confirmarSenha: confirmarSenha
+            };
+
+            mostrarLoading(true);
+
+            // Determinar se é criação ou atualização
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `/api/usuarios/${id}` : '/api/usuarios';
+
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(usuarioDTO)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => { throw new Error(text) });
+                }
+                return response.json();
+            })
+            .then(data => {
+                modalUsuario.hide();
+                buscarUsuarios();
+                alert(id ? 'Usuário atualizado com sucesso!' : 'Usuário criado com sucesso!');
+            })
+            .catch(error => {
+                console.error('Erro ao salvar usuário:', error);
+                try {
+                    const errorObj = JSON.parse(error.message);
+                    alert(errorObj.message || 'Erro ao salvar usuário. Por favor, tente novamente.');
+                } catch (e) {
+                    alert(error.message || 'Erro ao salvar usuário. Por favor, tente novamente.');
+                }
+            })
+            .finally(() => {
+                mostrarLoading(false);
+            });
+        }
+
+        // Função para confirmar alteração de status (ativar/desativar)
+        function confirmarAlterarStatus(id, ativar) {
+            const mensagem = ativar
+                ? 'Tem certeza que deseja ativar este usuário?'
+                : 'Tem certeza que deseja desativar este usuário?';
+
+            document.getElementById('mensagemConfirmacao').textContent = mensagem;
+
+            const btnConfirmar = document.getElementById('btnConfirmar');
+            btnConfirmar.onclick = () => {
+                alterarStatusUsuario(id);
+                modalConfirmacao.hide();
+            };
+
+            modalConfirmacao.show();
+        }
+
+        // Função para alterar status do usuário
+        function alterarStatusUsuario(id) {
+            mostrarLoading(true);
+
+            fetch(`/api/usuarios/${id}/status`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => { throw new Error(text) });
+                }
+                return response.json();
+            })
+            .then(data => {
+                buscarUsuarios();
+                const mensagem = data.ativo
+                    ? 'Usuário ativado com sucesso!'
+                    : 'Usuário desativado com sucesso!';
+                alert(mensagem);
+            })
+            .catch(error => {
+                console.error('Erro ao alterar status do usuário:', error);
+                try {
+                    const errorObj = JSON.parse(error.message);
+                    alert(errorObj.message || 'Erro ao alterar status do usuário. Por favor, tente novamente.');
+                } catch (e) {
+                    alert(error.message || 'Erro ao alterar status do usuário. Por favor, tente novamente.');
+                }
+            })
+            .finally(() => {
+                mostrarLoading(false);
+            });
+        }
+
+        // Função para traduzir o grupo para exibição
+        function traduzirGrupo(grupo) {
+            const traducoes = {
+                'ADMIN': 'Administrador',
+                'ESTOQUISTA': 'Estoquista'
+            };
+
+            return traducoes[grupo] || grupo;
+        }
+
+        // Função para mostrar/esconder overlay de carregamento
+        function mostrarLoading(exibir) {
+            const overlay = document.getElementById('loadingOverlay');
+            if (exibir) {
+                overlay.style.display = 'flex';
+            } else {
+                overlay.style.display = 'none';
+            }
+        }
+</script>

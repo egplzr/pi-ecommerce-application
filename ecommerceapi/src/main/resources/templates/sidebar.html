@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Sidebar Fragment -->
+<div th:fragment="sidebar(activeMenu)" class="col-md-3 col-lg-2 sidebar p-0">
+    <div class="d-flex flex-column p-3">
+        <h3 class="text-center mb-4">E-commerce</h3>
+
+        <div class="user-info mb-4 p-2 border-bottom">
+            <div id="usuarioLogado">Carregando...</div>
+            <div id="grupoUsuario" class="text-muted">Carregando...</div>
+        </div>
+
+        <ul class="nav flex-column">
+            <li class="nav-item mb-2">
+                <a href="/dashboard" class="nav-link" th:classappend="${activeMenu == 'dashboard' ? 'active' : ''}">
+                    <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item mb-2" id="menuUsuarios">
+                <a href="/usuarios" class="nav-link" th:classappend="${activeMenu == 'usuarios' ? 'active' : ''}">
+                    <i class="bi bi-people me-2"></i> Usuários
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/produtos" class="nav-link" th:classappend="${activeMenu == 'produtos' ? 'active' : ''}">
+                    <i class="bi bi-box-seam me-2"></i> Produtos
+                </a>
+            </li>
+            <li class="nav-item mb-2 mt-5">
+                <a href="/logout" class="nav-link text-danger">
+                    <i class="bi bi-box-arrow-right me-2"></i> Sair
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+</body>
+</html>
