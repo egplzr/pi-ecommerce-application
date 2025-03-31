@@ -20,14 +20,14 @@ public class Produto {
     private Long id;
 
     @NotBlank(message = "O código do produto é obrigatório")
-    @Column(unique = true, columnDefinition = "text")
+    @Column(unique = true, columnDefinition = "varchar", length = 50)
     private String codigo;
 
     @NotBlank(message = "O nome do produto é obrigatório")
-    @Column(columnDefinition = "text")
+    @Column(columnDefinition = "varchar")
     private String nome;
 
-    @Column(columnDefinition = "text")
+    @Column(columnDefinition = "varchar")
     private String descricao;
 
     @NotNull(message = "O preço do produto é obrigatório")

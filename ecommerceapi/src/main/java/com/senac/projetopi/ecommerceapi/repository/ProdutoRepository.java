@@ -17,9 +17,9 @@ public interface ProdutoRepository extends JpaRepository<Produto, Long> {
 
     Page<Produto> findByNomeContainingIgnoreCase(String nome, Pageable pageable);
 
-    @Query(value = "SELECT p FROM Produto p WHERE " +
-            "(:nome IS NULL OR cast(p.nome as string) LIKE CONCAT('%', cast(:nome as string), '%')) AND " +
-            "(:codigo IS NULL OR cast(p.codigo as string) = cast(:codigo as string)) AND " +
+    @Query("SELECT p FROM Produto p WHERE " +
+            "(:nome IS NULL OR p.nome LIKE CONCAT('%', :nome, '%')) AND " +
+            "(:codigo IS NULL OR p.codigo = :codigo) AND " +
             "(:ativo IS NULL OR p.ativo = :ativo)")
     Page<Produto> buscarComFiltros(
             @Param("nome") String nome,
