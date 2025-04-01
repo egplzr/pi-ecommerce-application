@@ -27,7 +27,8 @@
         <div class="col-md-9 col-lg-10 content">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2>Gestão de Produtos</h2>
-                <button class="btn btn-primary" onclick="abrirModalCadastro()">
+                <!-- Botão com id para poder ocultá-lo -->
+                <button id="btnNovoProduto" class="btn btn-primary" onclick="abrirModalCadastro()">
                     <i class="bi bi-plus-circle me-2"></i>Novo Produto
                 </button>
             </div>
@@ -295,21 +296,25 @@
           const roles = data.roles.map(role => role.authority.replace('ROLE_', ''));
           document.getElementById('grupoUsuario').textContent = roles.join(', ');
           userRole = roles.join(', ').toUpperCase();
+          // Se o usuário for ESTOQUISTA, oculta o botão de "Novo Produto"
+          if(userRole.includes("ESTOQUISTA")) {
+            document.getElementById("btnNovoProduto").style.display = "none";
+          } else {
+            document.getElementById("btnNovoProduto").style.display = "block";
+          }
         })
         .catch(error => console.error('Erro ao carregar informações do usuário:', error));
     }
 
-    // Função que aplica restrições para o usuário Estoquista
+    // Função que aplica restrições para o usuário Estoquista nos campos do formulário
     function aplicarRestricoesEstoquista() {
       if (userRole.includes("ESTOQUISTA")) {
-        // Desabilita os campos que o estoquista não pode alterar
         document.getElementById('codigo').disabled = true;
         document.getElementById('nome').disabled = true;
         document.getElementById('descricao').disabled = true;
         document.getElementById('preco').disabled = true;
         document.getElementById('avaliacao').disabled = true;
       } else {
-        // Habilita os campos para outros perfis
         document.getElementById('codigo').disabled = false;
         document.getElementById('nome').disabled = false;
         document.getElementById('descricao').disabled = false;
