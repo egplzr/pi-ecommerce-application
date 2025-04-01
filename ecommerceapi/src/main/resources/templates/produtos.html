@@ -81,7 +81,6 @@
                             <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Imagem</th>
                                 <th>Código</th>
                                 <th>Nome</th>
                                 <th>Preço</th>
@@ -331,13 +330,13 @@
                 : `<button class="btn btn-sm btn-outline-success" onclick="confirmarAlterarStatus(${produto.id}, true)">Ativar</button>`;
 
             // Imagem do produto
-            const imagemHtml = produto.imagemPrincipalUrl
-                ? `<img src="${produto.imagemPrincipalUrl}" alt="${produto.nome}" style="height: 40px; width: 40px; object-fit: cover;">`
-                : '<div class="text-center text-muted"><i class="bi bi-image"></i></div>';
+            //const imagemHtml = produto.imagemPrincipalUrl
+            //    ? `<img src="${produto.imagemPrincipalUrl}" alt="${produto.nome}" style="height: 40px; width: 40px; object-fit: cover;">`
+            //    : '<div class="text-center text-muted"><i class="bi bi-image"></i></div>';
 
             tr.innerHTML = `
                 <td>${produto.id}</td>
-                <td>${imagemHtml}</td>
+
                 <td>${produto.codigo}</td>
                 <td>${produto.nome}</td>
                 <td>R$ ${produto.preco.toFixed(2)}</td>
