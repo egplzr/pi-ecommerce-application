@@ -135,7 +135,6 @@
                     <div class="tab-pane fade show active" id="dados" role="tabpanel" aria-labelledby="dados-tab">
                         <form id="formProduto">
                             <input type="hidden" id="produtoId">
-
                             <div class="row mb-3">
                                 <div class="col-md-4">
                                     <label for="codigo" class="form-label">Código</label>
@@ -146,12 +145,10 @@
                                     <input type="text" class="form-control" id="nome" required>
                                 </div>
                             </div>
-
                             <div class="mb-3">
                                 <label for="descricao" class="form-label">Descrição</label>
                                 <textarea class="form-control" id="descricao" rows="3"></textarea>
                             </div>
-
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label for="preco" class="form-label">Preço</label>
@@ -165,14 +162,19 @@
                                     <input type="number" min="0" class="form-control" id="quantidadeEstoque" required>
                                 </div>
                             </div>
-
+                            <!-- Novo campo Avaliação -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="avaliacao" class="form-label">Avaliação</label>
+                                    <input type="number" step="0.01" min="0" max="5" class="form-control" id="avaliacao" required>
+                                </div>
+                            </div>
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="ativo" checked>
                                 <label class="form-check-label" for="ativo">Produto Ativo</label>
                             </div>
                         </form>
                     </div>
-
                     <!-- Aba de Imagens -->
                     <div class="tab-pane fade" id="imagens" role="tabpanel" aria-labelledby="imagens-tab">
                         <!-- Upload de imagens -->
@@ -187,7 +189,6 @@
                                 <button class="btn btn-primary" type="button" onclick="uploadImagem()">Upload</button>
                             </div>
                         </div>
-
                         <!-- Lista de imagens -->
                         <div class="row" id="listaImagens">
                             <!-- Imagens serão carregadas via JavaScript -->
@@ -198,6 +199,41 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-primary" id="btnSalvar" onclick="salvarProduto()">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Visualização do Produto -->
+<div class="modal fade" id="modalVisualizarProduto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tituloVisualizarProduto">Detalhes do Produto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Carousel para exibir as imagens -->
+                <div id="carouselProduto" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner" id="carouselInnerProduto">
+                        <!-- Slides serão inseridos dinamicamente -->
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselProduto" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Anterior</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#carouselProduto" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Próximo</span>
+                    </button>
+                </div>
+                <!-- Dados do Produto -->
+                <div class="mt-3">
+                    <h3 id="nomeProduto"></h3>
+                    <p id="descricaoProduto"></p>
+                    <p><strong>Preço:</strong> R$ <span id="precoProduto"></span></p>
+                    <p><strong>Avaliação:</strong> <span id="avaliacaoProduto"></span></p>
+                </div>
             </div>
         </div>
     </div>
@@ -225,7 +261,9 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/static/js/csrf-token.js"></script>
 <script>
-    // Variáveis globais
+    // Variável global para armazenar a role do usuário
+    let userRole = "";
+
     let paginaAtual = 0;
     let tamanhoPagina = 10;
     let totalPaginas = 0;
@@ -233,605 +271,499 @@
     let modalProduto = null;
     let modalConfirmacao = null;
 
-    // Quando o documento estiver pronto
     window.addEventListener('DOMContentLoaded', function() {
-        // Inicializar modais Bootstrap
-        modalProduto = new bootstrap.Modal(document.getElementById('modalProduto'));
-        modalConfirmacao = new bootstrap.Modal(document.getElementById('modalConfirmacao'));
+      modalProduto = new bootstrap.Modal(document.getElementById('modalProduto'));
+      modalConfirmacao = new bootstrap.Modal(document.getElementById('modalConfirmacao'));
 
-        // Carregar informações do usuário logado
-        carregarInfoUsuario();
+      carregarInfoUsuario();
 
-        // Configurar formatação de preço
-        document.getElementById('preco').addEventListener('blur', function() {
-            if (this.value) {
-                this.value = parseFloat(this.value).toFixed(2);
-            }
-        });
+      document.getElementById('preco').addEventListener('blur', function() {
+        if (this.value) {
+          this.value = parseFloat(this.value).toFixed(2);
+        }
+      });
 
-        // Carregar lista de produtos
-        buscarProdutos();
+      buscarProdutos();
     });
 
-    // Função para carregar informações do usuário logado
     function carregarInfoUsuario() {
-        fetch('/api/auth/user-info')
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('usuarioLogado').textContent = data.email;
-
-                const roles = data.roles.map(role => role.authority.replace('ROLE_', '')).join(', ');
-                document.getElementById('grupoUsuario').textContent = roles;
-            })
-            .catch(error => {
-                console.error('Erro ao carregar informações do usuário:', error);
-            });
+      fetch('/api/auth/user-info')
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('usuarioLogado').textContent = data.email;
+          // Armazenar a role removendo o prefixo "ROLE_"
+          const roles = data.roles.map(role => role.authority.replace('ROLE_', ''));
+          document.getElementById('grupoUsuario').textContent = roles.join(', ');
+          userRole = roles.join(', ').toUpperCase();
+        })
+        .catch(error => console.error('Erro ao carregar informações do usuário:', error));
     }
 
-    // Função para buscar produtos com paginação e filtros
+    // Função que aplica restrições para o usuário Estoquista
+    function aplicarRestricoesEstoquista() {
+      if (userRole.includes("ESTOQUISTA")) {
+        // Desabilita os campos que o estoquista não pode alterar
+        document.getElementById('codigo').disabled = true;
+        document.getElementById('nome').disabled = true;
+        document.getElementById('descricao').disabled = true;
+        document.getElementById('preco').disabled = true;
+        document.getElementById('avaliacao').disabled = true;
+      } else {
+        // Habilita os campos para outros perfis
+        document.getElementById('codigo').disabled = false;
+        document.getElementById('nome').disabled = false;
+        document.getElementById('descricao').disabled = false;
+        document.getElementById('preco').disabled = false;
+        document.getElementById('avaliacao').disabled = false;
+      }
+    }
+
     function buscarProdutos() {
-        mostrarLoading(true);
-
-        let url = `/api/produtos?page=${paginaAtual}&size=${tamanhoPagina}`;
-
-        const filtroNome = document.getElementById('filtroNome').value;
-        if (filtroNome) {
-            url += `&nome=${encodeURIComponent(filtroNome)}`;
-        }
-
-        const filtroCodigo = document.getElementById('filtroCodigo').value;
-        if (filtroCodigo) {
-            url += `&codigo=${encodeURIComponent(filtroCodigo)}`;
-        }
-
-        const filtroStatus = document.getElementById('filtroStatus').value;
-        if (filtroStatus) {
-            url += `&ativo=${filtroStatus}`;
-        }
-
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                renderizarTabela(data.content);
-                atualizarPaginacao(data);
-            })
-            .catch(error => {
-                console.error('Erro ao buscar produtos:', error);
-                alert('Erro ao carregar produtos. Por favor, tente novamente.');
-            })
-            .finally(() => {
-                mostrarLoading(false);
-            });
+      mostrarLoading(true);
+      let url = `/api/produtos?page=${paginaAtual}&size=${tamanhoPagina}`;
+      const filtroNome = document.getElementById('filtroNome').value;
+      if (filtroNome) url += `&nome=${encodeURIComponent(filtroNome)}`;
+      const filtroCodigo = document.getElementById('filtroCodigo').value;
+      if (filtroCodigo) url += `&codigo=${encodeURIComponent(filtroCodigo)}`;
+      const filtroStatus = document.getElementById('filtroStatus').value;
+      if (filtroStatus) url += `&ativo=${filtroStatus}`;
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          renderizarTabela(data.content);
+          atualizarPaginacao(data);
+        })
+        .catch(error => {
+          console.error('Erro ao buscar produtos:', error);
+          alert('Erro ao carregar produtos. Por favor, tente novamente.');
+        })
+        .finally(() => mostrarLoading(false));
     }
 
-    // Função para renderizar a tabela de produtos
     function renderizarTabela(produtos) {
-        const tbody = document.getElementById('tabelaProdutos');
-        tbody.innerHTML = '';
+      const tbody = document.getElementById('tabelaProdutos');
+      tbody.innerHTML = '';
+      if (produtos.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="8" class="text-center">Nenhum produto encontrado</td>';
+        tbody.appendChild(tr);
+        return;
+      }
+      produtos.forEach(produto => {
+        const tr = document.createElement('tr');
+        const statusBadge = produto.ativo
+          ? '<span class="badge bg-success status-badge">Ativo</span>'
+          : '<span class="badge bg-danger status-badge">Inativo</span>';
+        // Botões de ações: Visualizar, Editar e Alterar Status
+        const btnVisualizar = `<button class="btn btn-sm btn-outline-info me-1" onclick="visualizarProduto(${produto.id})">
+                                  <i class="bi bi-eye"></i>
+                               </button>`;
+        const btnEditar = `<button class="btn btn-sm btn-outline-primary me-1" onclick="editarProduto(${produto.id})">
+                             <i class="bi bi-pencil"></i>
+                           </button>`;
+        const btnStatus = produto.ativo
+          ? `<button class="btn btn-sm btn-outline-danger" onclick="confirmarAlterarStatus(${produto.id}, false)">Desativar</button>`
+          : `<button class="btn btn-sm btn-outline-success" onclick="confirmarAlterarStatus(${produto.id}, true)">Ativar</button>`;
+        tr.innerHTML = `
+          <td>${produto.id}</td>
+          <td>${produto.codigo}</td>
+          <td>${produto.nome}</td>
+          <td>R$ ${produto.preco.toFixed(2)}</td>
+          <td>${produto.quantidadeEstoque}</td>
+          <td>${statusBadge}</td>
+          <td>
+            ${btnVisualizar}
+            ${btnEditar}
+            ${btnStatus}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
 
-        if (produtos.length === 0) {
-            const tr = document.createElement('tr');
-            tr.innerHTML = '<td colspan="8" class="text-center">Nenhum produto encontrado</td>';
-            tbody.appendChild(tr);
+    function atualizarPaginacao(data) {
+      paginaAtual = data.number;
+      totalPaginas = data.totalPages;
+      totalElementos = data.totalElements;
+      const inicio = totalElementos > 0 ? paginaAtual * tamanhoPagina + 1 : 0;
+      const fim = Math.min((paginaAtual + 1) * tamanhoPagina, totalElementos);
+      document.getElementById('informacaoPaginacao').textContent = `Exibindo ${inicio}-${fim} de ${totalElementos} registros`;
+      const paginacao = document.getElementById('paginacao');
+      paginacao.innerHTML = '';
+      const liAnterior = document.createElement('li');
+      liAnterior.className = `page-item ${paginaAtual === 0 ? 'disabled' : ''}`;
+      liAnterior.innerHTML = `<a class="page-link" href="#" onclick="irParaPagina(${paginaAtual - 1}); return false;"><i class="bi bi-chevron-left"></i></a>`;
+      paginacao.appendChild(liAnterior);
+      let inicio_paginas = Math.max(0, paginaAtual - 2);
+      let fim_paginas = Math.min(totalPaginas - 1, paginaAtual + 2);
+      for (let i = inicio_paginas; i <= fim_paginas; i++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${i === paginaAtual ? 'active' : ''}`;
+        li.innerHTML = `<a class="page-link" href="#" onclick="irParaPagina(${i}); return false;">${i + 1}</a>`;
+        paginacao.appendChild(li);
+      }
+      const liProximo = document.createElement('li');
+      liProximo.className = `page-item ${paginaAtual === totalPaginas - 1 || totalPaginas === 0 ? 'disabled' : ''}`;
+      liProximo.innerHTML = `<a class="page-link" href="#" onclick="irParaPagina(${paginaAtual + 1}); return false;"><i class="bi bi-chevron-right"></i></a>`;
+      paginacao.appendChild(liProximo);
+    }
+
+    function irParaPagina(pagina) {
+      if (pagina < 0 || pagina >= totalPaginas) return;
+      paginaAtual = pagina;
+      buscarProdutos();
+    }
+
+    function limparFiltros() {
+      document.getElementById('filtroNome').value = '';
+      document.getElementById('filtroCodigo').value = '';
+      document.getElementById('filtroStatus').value = '';
+      paginaAtual = 0;
+      buscarProdutos();
+    }
+
+    function abrirModalCadastro() {
+      document.getElementById('tituloModal').textContent = 'Novo Produto';
+      document.getElementById('formProduto').reset();
+      document.getElementById('produtoId').value = '';
+      // Para novo produto, habilita o campo código (caso não seja estoquista, se for, a restrição será aplicada a seguir)
+      document.getElementById('codigo').disabled = false;
+      document.getElementById('imagens-tab-container').style.display = 'none';
+      document.getElementById('btnSalvar').style.display = 'block';
+      const dadosTab = new bootstrap.Tab(document.getElementById('dados-tab'));
+      dadosTab.show();
+      document.getElementById('listaImagens').innerHTML = '';
+      // Aplica restrições se o usuário for estoquista
+      aplicarRestricoesEstoquista();
+      modalProduto.show();
+    }
+
+    function editarProduto(id) {
+      mostrarLoading(true);
+      fetch(`/api/produtos/${id}`)
+        .then(response => response.json())
+        .then(produto => {
+          document.getElementById('tituloModal').textContent = 'Editar Produto';
+          document.getElementById('produtoId').value = produto.id;
+          document.getElementById('codigo').value = produto.codigo;
+          document.getElementById('codigo').disabled = true; // Em edição, o código não é alterado
+          document.getElementById('nome').value = produto.nome;
+          document.getElementById('descricao').value = produto.descricao || '';
+          document.getElementById('preco').value = produto.preco.toFixed(2);
+          document.getElementById('quantidadeEstoque').value = produto.quantidadeEstoque;
+          document.getElementById('ativo').checked = produto.ativo;
+          if(produto.avaliacao !== undefined && produto.avaliacao !== null){
+            document.getElementById('avaliacao').value = produto.avaliacao;
+          } else {
+            document.getElementById('avaliacao').value = 0;
+          }
+          document.getElementById('imagens-tab-container').style.display = 'block';
+          document.getElementById('btnSalvar').style.display = 'block';
+          const dadosTab = new bootstrap.Tab(document.getElementById('dados-tab'));
+          dadosTab.show();
+          carregarImagensProduto(produto.id);
+          // Aplica restrições se o usuário for estoquista
+          aplicarRestricoesEstoquista();
+          modalProduto.show();
+        })
+        .catch(error => {
+          console.error('Erro ao carregar produto:', error);
+          alert('Erro ao carregar dados do produto. Por favor, tente novamente.');
+        })
+        .finally(() => mostrarLoading(false));
+    }
+
+    function carregarImagensProduto(produtoId) {
+      fetch(`/api/produtos/${produtoId}/imagens`)
+        .then(response => response.json())
+        .then(imagens => {
+          const listaImagens = document.getElementById('listaImagens');
+          listaImagens.innerHTML = '';
+          if (imagens.length === 0) {
+            listaImagens.innerHTML = '<div class="col-12 text-center text-muted py-3">Nenhuma imagem cadastrada</div>';
             return;
-        }
-
-        produtos.forEach(produto => {
-            const tr = document.createElement('tr');
-
-            // Status do produto
-            const statusBadge = produto.ativo
-                ? '<span class="badge bg-success status-badge">Ativo</span>'
-                : '<span class="badge bg-danger status-badge">Inativo</span>';
-
-            // Botão de status (alternar ativo/inativo)
-            const btnStatus = produto.ativo
-                ? `<button class="btn btn-sm btn-outline-danger" onclick="confirmarAlterarStatus(${produto.id}, false)">Desativar</button>`
-                : `<button class="btn btn-sm btn-outline-success" onclick="confirmarAlterarStatus(${produto.id}, true)">Ativar</button>`;
-
-            // Imagem do produto
-            //const imagemHtml = produto.imagemPrincipalUrl
-            //    ? `<img src="${produto.imagemPrincipalUrl}" alt="${produto.nome}" style="height: 40px; width: 40px; object-fit: cover;">`
-            //    : '<div class="text-center text-muted"><i class="bi bi-image"></i></div>';
-
-            tr.innerHTML = `
-                <td>${produto.id}</td>
-
-                <td>${produto.codigo}</td>
-                <td>${produto.nome}</td>
-                <td>R$ ${produto.preco.toFixed(2)}</td>
-                <td>${produto.quantidadeEstoque}</td>
-                <td>${statusBadge}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editarProduto(${produto.id})">
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                    ${btnStatus}
-                </td>
-            `;
-
-            tbody.appendChild(tr);
+          }
+          imagens.forEach(imagem => {
+            const colDiv = document.createElement('div');
+            colDiv.className = 'col-md-4 mb-3';
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'card h-100';
+            if (imagem.principal) cardDiv.classList.add('border-primary');
+            const img = document.createElement('img');
+            img.src = imagem.caminho;
+            img.className = 'card-img-top';
+            img.style = 'height: 150px; object-fit: cover;';
+            img.alt = imagem.nomeArquivo;
+            const cardBody = document.createElement('div');
+            cardBody.className = 'card-body';
+            const cardText = document.createElement('p');
+            cardText.className = 'card-text small text-truncate';
+            cardText.textContent = imagem.nomeArquivo;
+            const cardActions = document.createElement('div');
+            cardActions.className = 'd-flex justify-content-between mt-2';
+            const btnPrincipal = document.createElement('button');
+            btnPrincipal.className = 'btn btn-sm btn-outline-primary';
+            btnPrincipal.disabled = imagem.principal;
+            btnPrincipal.textContent = imagem.principal ? 'Principal' : 'Definir como Principal';
+            btnPrincipal.onclick = function() { definirImagemPrincipal(produtoId, imagem.id); };
+            const btnRemover = document.createElement('button');
+            btnRemover.className = 'btn btn-sm btn-outline-danger';
+            btnRemover.innerHTML = '<i class="bi bi-trash"></i>';
+            btnRemover.onclick = function() { confirmarRemoverImagem(produtoId, imagem.id); };
+            cardActions.appendChild(btnPrincipal);
+            cardActions.appendChild(btnRemover);
+            cardBody.appendChild(cardText);
+            cardBody.appendChild(cardActions);
+            cardDiv.appendChild(img);
+            cardDiv.appendChild(cardBody);
+            colDiv.appendChild(cardDiv);
+            listaImagens.appendChild(colDiv);
+          });
+        })
+        .catch(error => {
+          console.error('Erro ao carregar imagens:', error);
+          document.getElementById('listaImagens').innerHTML =
+            '<div class="col-12 text-center text-danger py-3">Erro ao carregar imagens</div>';
         });
     }
 
-    // Função para atualizar informações de paginação
-    function atualizarPaginacao(data) {
-        paginaAtual = data.number;
-        totalPaginas = data.totalPages;
-        totalElementos = data.totalElements;
-
-        // Atualizar texto informativo
-        const inicio = totalElementos > 0 ? paginaAtual * tamanhoPagina + 1 : 0;
-        const fim = Math.min((paginaAtual + 1) * tamanhoPagina, totalElementos);
-
-        document.getElementById('informacaoPaginacao').textContent =
-            `Exibindo ${inicio}-${fim} de ${totalElementos} registros`;
-
-        // Gerar links de paginação
-        const paginacao = document.getElementById('paginacao');
-        paginacao.innerHTML = '';
-
-        // Botão anterior
-        const liAnterior = document.createElement('li');
-        liAnterior.className = `page-item ${paginaAtual === 0 ? 'disabled' : ''}`;
-        liAnterior.innerHTML = `
-            <a class="page-link" href="#" onclick="irParaPagina(${paginaAtual - 1}); return false;">
-                <i class="bi bi-chevron-left"></i>
-            </a>
-        `;
-        paginacao.appendChild(liAnterior);
-
-        // Páginas
-        let inicio_paginas = Math.max(0, paginaAtual - 2);
-        let fim_paginas = Math.min(totalPaginas - 1, paginaAtual + 2);
-
-        for (let i = inicio_paginas; i <= fim_paginas; i++) {
-            const li = document.createElement('li');
-            li.className = `page-item ${i === paginaAtual ? 'active' : ''}`;
-            li.innerHTML = `
-                <a class="page-link" href="#" onclick="irParaPagina(${i}); return false;">
-                    ${i + 1}
-                </a>
-            `;
-            paginacao.appendChild(li);
+    function uploadImagem() {
+      const produtoId = document.getElementById('produtoId').value;
+      if (!produtoId) {
+        alert('É necessário salvar o produto antes de adicionar imagens');
+        return;
+      }
+      const inputImagem = document.getElementById('imagemUpload');
+      if (!inputImagem.files || inputImagem.files.length === 0) {
+        alert('Selecione uma imagem para upload');
+        return;
+      }
+      const imagemPrincipal = document.getElementById('imagemPrincipal').checked;
+      const formData = new FormData();
+      formData.append('imagem', inputImagem.files[0]);
+      formData.append('principal', imagemPrincipal);
+      mostrarLoading(true);
+      fetch(`/api/produtos/${produtoId}/imagens`, {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => {
+        if (!response.ok) return response.text().then(text => { throw new Error(text); });
+        return response.json();
+      })
+      .then(data => {
+        alert('Imagem enviada com sucesso!');
+        carregarImagensProduto(produtoId);
+        inputImagem.value = '';
+        document.getElementById('imagemPrincipal').checked = false;
+      })
+      .catch(error => {
+        console.error('Erro ao enviar imagem:', error);
+        try {
+          const errorObj = JSON.parse(error.message);
+          alert(errorObj.message || 'Erro ao enviar imagem. Por favor, tente novamente.');
+        } catch (e) {
+          alert(error.message || 'Erro ao enviar imagem. Por favor, tente novamente.');
         }
-
-        // Botão próximo
-        const liProximo = document.createElement('li');
-        liProximo.className = `page-item ${paginaAtual === totalPaginas - 1 || totalPaginas === 0 ? 'disabled' : ''}`;
-        liProximo.innerHTML = `
-            <a class="page-link" href="#" onclick="irParaPagina(${paginaAtual + 1}); return false;">
-                <i class="bi bi-chevron-right"></i>
-            </a>
-        `;
-        paginacao.appendChild(liProximo);
+      })
+      .finally(() => mostrarLoading(false));
     }
 
-    // Função para ir para uma página específica
-        function irParaPagina(pagina) {
-            if (pagina < 0 || pagina >= totalPaginas) return;
-
-            paginaAtual = pagina;
-            buscarProdutos();
+    function definirImagemPrincipal(produtoId, imagemId) {
+      mostrarLoading(true);
+      fetch(`/api/produtos/${produtoId}/imagens/${imagemId}/principal`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(response => {
+        if (!response.ok) return response.text().then(text => { throw new Error(text); });
+        return response.json();
+      })
+      .then(data => { carregarImagensProduto(produtoId); })
+      .catch(error => {
+        console.error('Erro ao definir imagem principal:', error);
+        try {
+          const errorObj = JSON.parse(error.message);
+          alert(errorObj.message || 'Erro ao definir imagem principal. Por favor, tente novamente.');
+        } catch (e) {
+          alert(error.message || 'Erro ao definir imagem principal. Por favor, tente novamente.');
         }
+      })
+      .finally(() => mostrarLoading(false));
+    }
 
-        // Função para limpar filtros
-        function limparFiltros() {
-            document.getElementById('filtroNome').value = '';
-            document.getElementById('filtroCodigo').value = '';
-            document.getElementById('filtroStatus').value = '';
-            paginaAtual = 0;
-            buscarProdutos();
+    function confirmarRemoverImagem(produtoId, imagemId) {
+      const mensagem = 'Tem certeza que deseja remover esta imagem?';
+      document.getElementById('mensagemConfirmacao').textContent = mensagem;
+      const btnConfirmar = document.getElementById('btnConfirmar');
+      btnConfirmar.onclick = () => {
+        removerImagem(produtoId, imagemId);
+        modalConfirmacao.hide();
+      };
+      modalConfirmacao.show();
+    }
+
+    function removerImagem(produtoId, imagemId) {
+      mostrarLoading(true);
+      fetch(`/api/produtos/${produtoId}/imagens/${imagemId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(response => {
+        if (!response.ok) return response.text().then(text => { throw new Error(text); });
+        return response.json();
+      })
+      .then(data => { carregarImagensProduto(produtoId); })
+      .catch(error => {
+        console.error('Erro ao remover imagem:', error);
+        try {
+          const errorObj = JSON.parse(error.message);
+          alert(errorObj.message || 'Erro ao remover imagem. Por favor, tente novamente.');
+        } catch (e) {
+          alert(error.message || 'Erro ao remover imagem. Por favor, tente novamente.');
         }
+      })
+      .finally(() => mostrarLoading(false));
+    }
 
-        // Função para abrir modal de cadastro
-        function abrirModalCadastro() {
-            document.getElementById('tituloModal').textContent = 'Novo Produto';
-            document.getElementById('formProduto').reset();
-            document.getElementById('produtoId').value = '';
-            document.getElementById('codigo').disabled = false;
-
-            // Esconder aba de imagens no cadastro
-            document.getElementById('imagens-tab-container').style.display = 'none';
-
-            // Exibir o botão de salvar
-            document.getElementById('btnSalvar').style.display = 'block';
-
-            // Ativar a aba de dados
-            const dadosTab = new bootstrap.Tab(document.getElementById('dados-tab'));
-            dadosTab.show();
-
-            // Limpar lista de imagens
-            document.getElementById('listaImagens').innerHTML = '';
-
-            modalProduto.show();
-        }
-
-        // Função para editar produto
-        function editarProduto(id) {
-            mostrarLoading(true);
-
-            fetch(`/api/produtos/${id}`)
-                .then(response => response.json())
-                .then(produto => {
-                    document.getElementById('tituloModal').textContent = 'Editar Produto';
-                    document.getElementById('produtoId').value = produto.id;
-                    document.getElementById('codigo').value = produto.codigo;
-                    document.getElementById('codigo').disabled = true; // Não permitir editar o código
-                    document.getElementById('nome').value = produto.nome;
-                    document.getElementById('descricao').value = produto.descricao || '';
-                    document.getElementById('preco').value = produto.preco.toFixed(2);
-                    document.getElementById('quantidadeEstoque').value = produto.quantidadeEstoque;
-                    document.getElementById('ativo').checked = produto.ativo;
-
-                    // Mostrar aba de imagens na edição
-                    document.getElementById('imagens-tab-container').style.display = 'block';
-
-                    // Exibir o botão de salvar
-                    document.getElementById('btnSalvar').style.display = 'block';
-
-                    // Ativar a aba de dados
-                    const dadosTab = new bootstrap.Tab(document.getElementById('dados-tab'));
-                    dadosTab.show();
-
-                    // Carregar imagens do produto
-                    carregarImagensProduto(produto.id);
-
-                    modalProduto.show();
-                })
-                .catch(error => {
-                    console.error('Erro ao carregar produto:', error);
-                    alert('Erro ao carregar dados do produto. Por favor, tente novamente.');
-                })
-                .finally(() => {
-                    mostrarLoading(false);
-                });
-        }
-
-        // Função para carregar imagens do produto
-        function carregarImagensProduto(produtoId) {
-            fetch(`/api/produtos/${produtoId}/imagens`)
-                .then(response => response.json())
-                .then(imagens => {
-                    const listaImagens = document.getElementById('listaImagens');
-                    listaImagens.innerHTML = '';
-
-                    if (imagens.length === 0) {
-                        listaImagens.innerHTML = '<div class="col-12 text-center text-muted py-3">Nenhuma imagem cadastrada</div>';
-                        return;
-                    }
-
-                    imagens.forEach(imagem => {
-                        const colDiv = document.createElement('div');
-                        colDiv.className = 'col-md-4 mb-3';
-
-                        const cardDiv = document.createElement('div');
-                        cardDiv.className = 'card h-100';
-                        if (imagem.principal) {
-                            cardDiv.classList.add('border-primary');
-                        }
-
-                        const img = document.createElement('img');
-                        img.src = imagem.caminho;
-                        img.className = 'card-img-top';
-                        img.style = 'height: 150px; object-fit: cover;';
-                        img.alt = imagem.nomeArquivo;
-
-                        const cardBody = document.createElement('div');
-                        cardBody.className = 'card-body';
-
-                        const cardText = document.createElement('p');
-                        cardText.className = 'card-text small text-truncate';
-                        cardText.textContent = imagem.nomeArquivo;
-
-                        const cardActions = document.createElement('div');
-                        cardActions.className = 'd-flex justify-content-between mt-2';
-
-                        // Botão de definir como principal
-                        const btnPrincipal = document.createElement('button');
-                        btnPrincipal.className = 'btn btn-sm btn-outline-primary';
-                        btnPrincipal.disabled = imagem.principal;
-                        btnPrincipal.textContent = imagem.principal ? 'Principal' : 'Definir como Principal';
-                        btnPrincipal.onclick = function() {
-                            definirImagemPrincipal(produtoId, imagem.id);
-                        };
-
-                        // Botão de remover imagem
-                        const btnRemover = document.createElement('button');
-                        btnRemover.className = 'btn btn-sm btn-outline-danger';
-                        btnRemover.innerHTML = '<i class="bi bi-trash"></i>';
-                        btnRemover.onclick = function() {
-                            confirmarRemoverImagem(produtoId, imagem.id);
-                        };
-
-                        cardActions.appendChild(btnPrincipal);
-                        cardActions.appendChild(btnRemover);
-
-                        cardBody.appendChild(cardText);
-                        cardBody.appendChild(cardActions);
-
-                        cardDiv.appendChild(img);
-                        cardDiv.appendChild(cardBody);
-
-                        colDiv.appendChild(cardDiv);
-                        listaImagens.appendChild(colDiv);
-                    });
-                })
-                .catch(error => {
-                    console.error('Erro ao carregar imagens:', error);
-                    document.getElementById('listaImagens').innerHTML =
-                        '<div class="col-12 text-center text-danger py-3">Erro ao carregar imagens</div>';
-                });
-        }
-
-        // Função para upload de imagem
-        function uploadImagem() {
-            const produtoId = document.getElementById('produtoId').value;
-            if (!produtoId) {
-                alert('É necessário salvar o produto antes de adicionar imagens');
-                return;
-            }
-
-            const inputImagem = document.getElementById('imagemUpload');
-            if (!inputImagem.files || inputImagem.files.length === 0) {
-                alert('Selecione uma imagem para upload');
-                return;
-            }
-
-            const imagemPrincipal = document.getElementById('imagemPrincipal').checked;
-
-            const formData = new FormData();
-            formData.append('imagem', inputImagem.files[0]);
-            formData.append('principal', imagemPrincipal);
-
-            mostrarLoading(true);
-
-            fetch(`/api/produtos/${produtoId}/imagens`, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => { throw new Error(text) });
-                }
-                return response.json();
-            })
-            .then(data => {
-                alert('Imagem enviada com sucesso!');
-                carregarImagensProduto(produtoId);
-                inputImagem.value = '';
-                document.getElementById('imagemPrincipal').checked = false;
-            })
-            .catch(error => {
-                console.error('Erro ao enviar imagem:', error);
-                try {
-                    const errorObj = JSON.parse(error.message);
-                    alert(errorObj.message || 'Erro ao enviar imagem. Por favor, tente novamente.');
-                } catch (e) {
-                    alert(error.message || 'Erro ao enviar imagem. Por favor, tente novamente.');
-                }
-            })
-            .finally(() => {
-                mostrarLoading(false);
+    // Função para visualizar os detalhes do produto
+    function visualizarProduto(produtoId) {
+      mostrarLoading(true);
+      fetch(`/api/produtos/${produtoId}`)
+        .then(response => response.json())
+        .then(produto => {
+          document.getElementById('nomeProduto').textContent = produto.nome;
+          document.getElementById('descricaoProduto').textContent = produto.descricao || 'Sem descrição';
+          document.getElementById('precoProduto').textContent = produto.preco.toFixed(2);
+          document.getElementById('avaliacaoProduto').textContent = produto.avaliacao;
+          const carouselInner = document.getElementById('carouselInnerProduto');
+          carouselInner.innerHTML = '';
+          if(produto.imagens && produto.imagens.length > 0) {
+            const imagensOrdenadas = produto.imagens.sort((a, b) => {
+              return (b.principal === true ? 1 : 0) - (a.principal === true ? 1 : 0);
             });
-        }
-
-        // Função para definir imagem principal
-        function definirImagemPrincipal(produtoId, imagemId) {
-            mostrarLoading(true);
-
-            fetch(`/api/produtos/${produtoId}/imagens/${imagemId}/principal`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => { throw new Error(text) });
-                }
-                return response.json();
-            })
-            .then(data => {
-                carregarImagensProduto(produtoId);
-            })
-            .catch(error => {
-                console.error('Erro ao definir imagem principal:', error);
-                try {
-                    const errorObj = JSON.parse(error.message);
-                    alert(errorObj.message || 'Erro ao definir imagem principal. Por favor, tente novamente.');
-                } catch (e) {
-                    alert(error.message || 'Erro ao definir imagem principal. Por favor, tente novamente.');
-                }
-            })
-            .finally(() => {
-                mostrarLoading(false);
+            imagensOrdenadas.forEach((imagem, index) => {
+              const divItem = document.createElement('div');
+              divItem.className = index === 0 ? 'carousel-item active' : 'carousel-item';
+              const img = document.createElement('img');
+              img.src = imagem.caminho;
+              img.className = 'd-block w-100';
+              img.style = 'max-height:400px; object-fit:contain;';
+              img.alt = imagem.nomeArquivo;
+              divItem.appendChild(img);
+              carouselInner.appendChild(divItem);
             });
+          } else {
+            carouselInner.innerHTML = '<div class="carousel-item active"><div class="d-flex justify-content-center align-items-center" style="height: 200px;">Nenhuma imagem disponível</div></div>';
+          }
+          const modalVisualizarProduto = new bootstrap.Modal(document.getElementById('modalVisualizarProduto'));
+          modalVisualizarProduto.show();
+        })
+        .catch(error => {
+          console.error('Erro ao visualizar produto:', error);
+          alert('Erro ao carregar os detalhes do produto. Por favor, tente novamente.');
+        })
+        .finally(() => mostrarLoading(false));
+    }
+
+    function salvarProduto() {
+      const form = document.getElementById('formProduto');
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+      const id = document.getElementById('produtoId').value;
+      const produtoDTO = {
+        codigo: document.getElementById('codigo').value,
+        nome: document.getElementById('nome').value,
+        descricao: document.getElementById('descricao').value,
+        preco: parseFloat(document.getElementById('preco').value),
+        quantidadeEstoque: parseInt(document.getElementById('quantidadeEstoque').value),
+        ativo: document.getElementById('ativo').checked,
+        avaliacao: parseFloat(document.getElementById('avaliacao').value) || 0
+      };
+      mostrarLoading(true);
+      const method = id ? 'PUT' : 'POST';
+      const url = id ? `/api/produtos/${id}` : '/api/produtos';
+      fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(produtoDTO)
+      })
+      .then(response => {
+        if (!response.ok) return response.text().then(text => { throw new Error(text); });
+        return response.json();
+      })
+      .then(data => {
+        if (!id) {
+          document.getElementById('produtoId').value = data.id;
+          document.getElementById('codigo').disabled = true;
+          document.getElementById('imagens-tab-container').style.display = 'block';
+          alert('Produto criado com sucesso! Agora você pode adicionar imagens.');
+          const imagensTab = new bootstrap.Tab(document.getElementById('imagens-tab'));
+          imagensTab.show();
+        } else {
+          modalProduto.hide();
+          buscarProdutos();
+          alert('Produto atualizado com sucesso!');
         }
-
-        // Função para confirmar remoção de imagem
-        function confirmarRemoverImagem(produtoId, imagemId) {
-            const mensagem = 'Tem certeza que deseja remover esta imagem?';
-
-            document.getElementById('mensagemConfirmacao').textContent = mensagem;
-
-            const btnConfirmar = document.getElementById('btnConfirmar');
-            btnConfirmar.onclick = () => {
-                removerImagem(produtoId, imagemId);
-                modalConfirmacao.hide();
-            };
-
-            modalConfirmacao.show();
+      })
+      .catch(error => {
+        console.error('Erro ao salvar produto:', error);
+        try {
+          const errorObj = JSON.parse(error.message);
+          alert(errorObj.message || 'Erro ao salvar produto. Por favor, tente novamente.');
+        } catch (e) {
+          alert(error.message || 'Erro ao salvar produto. Por favor, tente novamente.');
         }
+      })
+      .finally(() => mostrarLoading(false));
+    }
 
-        // Função para remover imagem
-        function removerImagem(produtoId, imagemId) {
-            mostrarLoading(true);
+    function confirmarAlterarStatus(id, ativar) {
+      const mensagem = ativar
+        ? 'Tem certeza que deseja ativar este produto?'
+        : 'Tem certeza que deseja desativar este produto?';
+      document.getElementById('mensagemConfirmacao').textContent = mensagem;
+      const btnConfirmar = document.getElementById('btnConfirmar');
+      btnConfirmar.onclick = () => {
+        alterarStatusProduto(id);
+        modalConfirmacao.hide();
+      };
+      modalConfirmacao.show();
+    }
 
-            fetch(`/api/produtos/${produtoId}/imagens/${imagemId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => { throw new Error(text) });
-                }
-                return response.json();
-            })
-            .then(data => {
-                carregarImagensProduto(produtoId);
-            })
-            .catch(error => {
-                console.error('Erro ao remover imagem:', error);
-                try {
-                    const errorObj = JSON.parse(error.message);
-                    alert(errorObj.message || 'Erro ao remover imagem. Por favor, tente novamente.');
-                } catch (e) {
-                    alert(error.message || 'Erro ao remover imagem. Por favor, tente novamente.');
-                }
-            })
-            .finally(() => {
-                mostrarLoading(false);
-            });
+    function alterarStatusProduto(id) {
+      mostrarLoading(true);
+      fetch(`/api/produtos/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(response => {
+        if (!response.ok) return response.text().then(text => { throw new Error(text); });
+        return response.json();
+      })
+      .then(data => {
+        buscarProdutos();
+        const mensagem = data.ativo ? 'Produto ativado com sucesso!' : 'Produto desativado com sucesso!';
+        alert(mensagem);
+      })
+      .catch(error => {
+        console.error('Erro ao alterar status do produto:', error);
+        try {
+          const errorObj = JSON.parse(error.message);
+          alert(errorObj.message || 'Erro ao alterar status do produto. Por favor, tente novamente.');
+        } catch (e) {
+          alert(error.message || 'Erro ao alterar status do produto. Por favor, tente novamente.');
         }
+      })
+      .finally(() => mostrarLoading(false));
+    }
 
-        // Função para salvar produto (criar ou atualizar)
-        function salvarProduto() {
-            // Validar formulário
-            const form = document.getElementById('formProduto');
-            if (!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
-
-            // Coletar dados do formulário
-            const id = document.getElementById('produtoId').value;
-            const produtoDTO = {
-                codigo: document.getElementById('codigo').value,
-                nome: document.getElementById('nome').value,
-                descricao: document.getElementById('descricao').value,
-                preco: parseFloat(document.getElementById('preco').value),
-                quantidadeEstoque: parseInt(document.getElementById('quantidadeEstoque').value),
-                ativo: document.getElementById('ativo').checked
-            };
-
-            mostrarLoading(true);
-
-            // Determinar se é criação ou atualização
-            const method = id ? 'PUT' : 'POST';
-            const url = id ? `/api/produtos/${id}` : '/api/produtos';
-
-            fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(produtoDTO)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => { throw new Error(text) });
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (!id) {
-                    // Se for um novo produto, atualizar o formulário para modo de edição
-                    document.getElementById('produtoId').value = data.id;
-                    document.getElementById('codigo').disabled = true;
-                    document.getElementById('imagens-tab-container').style.display = 'block';
-
-                    // Exibir mensagem e oferecer opção de adicionar imagens
-                    alert('Produto criado com sucesso! Agora você pode adicionar imagens.');
-
-                    // Focar na aba de imagens
-                    const imagensTab = new bootstrap.Tab(document.getElementById('imagens-tab'));
-                    imagensTab.show();
-                } else {
-                    modalProduto.hide();
-                    buscarProdutos();
-                    alert('Produto atualizado com sucesso!');
-                }
-            })
-            .catch(error => {
-                console.error('Erro ao salvar produto:', error);
-                try {
-                    const errorObj = JSON.parse(error.message);
-                    alert(errorObj.message || 'Erro ao salvar produto. Por favor, tente novamente.');
-                } catch (e) {
-                    alert(error.message || 'Erro ao salvar produto. Por favor, tente novamente.');
-                }
-            })
-            .finally(() => {
-                mostrarLoading(false);
-            });
-        }
-
-        // Função para confirmar alteração de status (ativar/desativar)
-        function confirmarAlterarStatus(id, ativar) {
-            const mensagem = ativar
-                ? 'Tem certeza que deseja ativar este produto?'
-                : 'Tem certeza que deseja desativar este produto?';
-
-            document.getElementById('mensagemConfirmacao').textContent = mensagem;
-
-            const btnConfirmar = document.getElementById('btnConfirmar');
-            btnConfirmar.onclick = () => {
-                alterarStatusProduto(id);
-                modalConfirmacao.hide();
-            };
-
-            modalConfirmacao.show();
-        }
-
-        // Função para alterar status do produto
-        function alterarStatusProduto(id) {
-            mostrarLoading(true);
-
-            fetch(`/api/produtos/${id}/status`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => { throw new Error(text) });
-                }
-                return response.json();
-            })
-            .then(data => {
-                buscarProdutos();
-                const mensagem = data.ativo
-                    ? 'Produto ativado com sucesso!'
-                    : 'Produto desativado com sucesso!';
-                alert(mensagem);
-            })
-            .catch(error => {
-                console.error('Erro ao alterar status do produto:', error);
-                try {
-                    const errorObj = JSON.parse(error.message);
-                    alert(errorObj.message || 'Erro ao alterar status do produto. Por favor, tente novamente.');
-                } catch (e) {
-                    alert(error.message || 'Erro ao alterar status do produto. Por favor, tente novamente.');
-                }
-            })
-            .finally(() => {
-                mostrarLoading(false);
-            });
-        }
-
-        // Função para mostrar/esconder overlay de carregamento
-        function mostrarLoading(exibir) {
-            const overlay = document.getElementById('loadingOverlay');
-            if (exibir) {
-                overlay.style.display = 'flex';
-            } else {
-                overlay.style.display = 'none';
-            }
-        }
+    function mostrarLoading(exibir) {
+      const overlay = document.getElementById('loadingOverlay');
+      overlay.style.display = exibir ? 'flex' : 'none';
+    }
 </script>
 </body>
 </html>

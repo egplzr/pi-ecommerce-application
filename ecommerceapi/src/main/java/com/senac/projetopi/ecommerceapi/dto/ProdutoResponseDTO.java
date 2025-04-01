@@ -22,6 +22,7 @@ public class ProdutoResponseDTO {
     private LocalDateTime dataAtualizacao;
     private List<ImagemProdutoDTO> imagens = new ArrayList<>();
     private String imagemPrincipalUrl;
+    private BigDecimal avaliacao; // Novo campo
 
     public static ProdutoResponseDTO fromEntity(Produto produto) {
         ProdutoResponseDTO dto = new ProdutoResponseDTO();
@@ -31,6 +32,7 @@ public class ProdutoResponseDTO {
         dto.setDescricao(produto.getDescricao());
         dto.setPreco(produto.getPreco());
         dto.setQuantidadeEstoque(produto.getQuantidadeEstoque());
+        dto.setAvaliacao(produto.getAvaliacao()); // Propagar avaliação
         dto.setAtivo(produto.isAtivo());
         dto.setDataCriacao(produto.getDataCriacao());
         dto.setDataAtualizacao(produto.getDataAtualizacao());
@@ -138,5 +140,13 @@ public class ProdutoResponseDTO {
 
     public void setImagemPrincipalUrl(String imagemPrincipalUrl) {
         this.imagemPrincipalUrl = imagemPrincipalUrl;
+    }
+
+    public BigDecimal getAvaliacao() {
+        return avaliacao;
+    }
+
+    public void setAvaliacao(BigDecimal avaliacao) {
+        this.avaliacao = avaliacao;
     }
 }

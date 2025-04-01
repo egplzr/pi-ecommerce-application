@@ -10,6 +10,8 @@ import com.senac.projetopi.ecommerceapi.repository.ProdutoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -173,12 +175,27 @@ public class ProdutoService {
         }
     }
 
+    /**
+     * Popula o objeto Produto com os dados do ProdutoDTO.
+     * Se o usuário autenticado for um estoquista, apenas a quantidade em estoque será atualizada.
+     */
     private void popularProdutoComDTO(Produto produto, ProdutoDTO produtoDTO) {
-        produto.setCodigo(produtoDTO.getCodigo());
-        produto.setNome(produtoDTO.getNome());
-        produto.setDescricao(produtoDTO.getDescricao());
-        produto.setPreco(produtoDTO.getPreco());
-        produto.setQuantidadeEstoque(produtoDTO.getQuantidadeEstoque());
-        produto.setAtivo(produtoDTO.isAtivo());
+        // Obter a autenticação atual
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isEstoquista = auth.getAuthorities().stream()
+                .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ROLE_ESTOQUISTA"));
+
+        if (isEstoquista) {
+            // O estoquista só pode alterar a quantidade em estoque
+            produto.setQuantidadeEstoque(produtoDTO.getQuantidadeEstoque());
+        } else {
+            produto.setCodigo(produtoDTO.getCodigo());
+            produto.setNome(produtoDTO.getNome());
+            produto.setDescricao(produtoDTO.getDescricao());
+            produto.setPreco(produtoDTO.getPreco());
+            produto.setQuantidadeEstoque(produtoDTO.getQuantidadeEstoque());
+            produto.setAvaliacao(produtoDTO.getAvaliacao());
+            produto.setAtivo(produtoDTO.isAtivo());
+        }
     }
 }

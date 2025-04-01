@@ -5,7 +5,6 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -38,6 +37,9 @@ public class Produto {
     private int quantidadeEstoque;
 
     private boolean ativo = true;
+
+    @Column(name = "avaliacao", precision = 3, scale = 2)
+    private BigDecimal avaliacao = BigDecimal.ZERO;
 
     @OneToMany(mappedBy = "produto", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ImagemProduto> imagens = new ArrayList<>();
@@ -77,6 +79,7 @@ public class Produto {
     }
 
     // Getters e Setters
+
     public Long getId() {
         return id;
     }
@@ -131,6 +134,14 @@ public class Produto {
 
     public void setAtivo(boolean ativo) {
         this.ativo = ativo;
+    }
+
+    public BigDecimal getAvaliacao() {
+        return avaliacao;
+    }
+
+    public void setAvaliacao(BigDecimal avaliacao) {
+        this.avaliacao = avaliacao;
     }
 
     public List<ImagemProduto> getImagens() {
