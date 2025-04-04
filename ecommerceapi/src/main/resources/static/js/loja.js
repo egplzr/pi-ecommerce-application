@@ -78,3 +78,23 @@ function mostrarMensagem(mensagem, tipo) {
         bsAlert.close();
     }, 3000);
 }
+
+// Funções para incrementar/decrementar quantidade
+function incrementQuantity() {
+    const input = document.getElementById('quantidade');
+    const maxValue = parseInt(input.getAttribute('max') || 999);
+    let currentValue = parseInt(input.value || 1);
+
+    if (currentValue < maxValue) {
+        input.value = currentValue + 1;
+    }
+}
+
+function decrementQuantity() {
+    const input = document.getElementById('quantidade');
+    let currentValue = parseInt(input.value || 1);
+
+    if (currentValue > 1) {
+        input.value = currentValue - 1;
+    }
+}

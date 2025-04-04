@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -45,5 +46,17 @@ public class LojaPageController {
         model.addAttribute("filtroCodigo", codigo);
 
         return "loja/home";
+    }
+
+    @GetMapping("/produto/{id}")
+    public String paginaDetalhesProduto(@PathVariable Long id, Model model) {
+        Produto produto = produtoService.buscarPorId(id);
+
+        // Converter para DTO
+        ProdutoResponseDTO produtoDTO = ProdutoResponseDTO.fromEntity(produto);
+
+        model.addAttribute("produto", produtoDTO);
+
+        return "loja/produto-detalhes";
     }
 }

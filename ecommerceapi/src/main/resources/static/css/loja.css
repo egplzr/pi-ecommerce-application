@@ -54,3 +54,46 @@
         height: 150px;
     }
 }
+
+/* Estilos específicos para a página de detalhes do produto */
+.product-gallery .main-image {
+    height: 350px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.product-gallery .thumbnail {
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.product-gallery .thumbnail:hover {
+    border-color: var(--primary-color) !important;
+}
+
+.product-gallery .thumbnail img {
+    max-height: 100%;
+    object-fit: contain;
+}
+
+/* Ajusta o input de quantidade para centralizar o número */
+input[type="number"].form-control {
+    text-align: center;
+}
+
+/* Remove as setas do input number */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield;
+}

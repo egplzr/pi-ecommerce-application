@@ -37,6 +37,9 @@ public class ProdutoResponseDTO {
         dto.setDataCriacao(produto.getDataCriacao());
         dto.setDataAtualizacao(produto.getDataAtualizacao());
 
+        // Configurar imagem padrão
+        dto.setImagemPrincipalUrl("/static/images/produto-sem-imagem.jpg");
+
         // Converter imagens
         if (produto.getImagens() != null && !produto.getImagens().isEmpty()) {
             dto.setImagens(produto.getImagens().stream()
@@ -47,7 +50,16 @@ public class ProdutoResponseDTO {
             produto.getImagens().stream()
                     .filter(ImagemProduto::isPrincipal)
                     .findFirst()
-                    .ifPresent(img -> dto.setImagemPrincipalUrl(img.getCaminho()));
+                    .ifPresent(img -> {
+                        // Garantir que o caminho começa com "/"
+                        String caminho = img.getCaminho();
+                        if (caminho != null && !caminho.isEmpty()) {
+                            if (!caminho.startsWith("/")) {
+                                caminho = "/" + caminho;
+                            }
+                            dto.setImagemPrincipalUrl(caminho);
+                        }
+                    });
         }
 
         return dto;

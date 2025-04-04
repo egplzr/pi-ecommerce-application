@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${produto.nome} + ' - E-commerce'">Detalhes do Produto - E-commerce</title>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/loja.css">
+    <style>
+        /* Estilos adicionais inline para garantir que funcionem */
+        .product-gallery .main-image {
+            height: 350px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .thumbnail {
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .thumbnail:hover {
+            border-color: #0d6efd !important;
+        }
+
+        .success-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px;
+            background-color: #28a745;
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            z-index: 1000;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<!-- Mensagem de sucesso -->
+<div id="successMessage" class="success-message">
+    <i class="bi bi-check-circle me-2"></i> Produto adicionado ao carrinho!
+</div>
+
+<!-- Cabeçalho -->
+<header class="bg-primary text-white py-3">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h1 class="fs-3 mb-0">
+                    <a href="/loja" class="text-white text-decoration-none">E-commerce</a>
+                </h1>
+            </div>
+            <div class="col-md-6 text-end">
+                <a href="/loja/carrinho" class="btn btn-outline-light">
+                    <i class="bi bi-cart-fill me-2"></i>
+                    Carrinho
+                    <span class="badge bg-light text-dark ms-1" id="cartItemCount">0</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Navegação -->
+<div class="bg-light py-2">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb m-0">
+                <li class="breadcrumb-item"><a href="/loja">Início</a></li>
+                <li class="breadcrumb-item active" aria-current="page" th:text="${produto.nome}">Produto</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- Conteúdo principal -->
+<main class="container py-4">
+    <div class="row">
+        <!-- Galeria de imagens -->
+        <div class="col-md-6 mb-4">
+            <div class="product-gallery">
+                <!-- Imagem Principal -->
+                <div class="main-image border mb-3 p-3 bg-white rounded text-center">
+                    <img th:if="${produto.imagemPrincipalUrl != null}"
+                         th:src="${produto.imagemPrincipalUrl}"
+                         class="img-fluid"
+                         th:alt="${produto.nome}"
+                         id="main-product-image"
+                         style="max-height: 350px;">
+                    <img th:if="${produto.imagemPrincipalUrl == null}"
+                         src="/static/images/produto-sem-imagem.jpg"
+                         class="img-fluid"
+                         alt="Imagem não disponível"
+                         style="max-height: 350px;">
+                </div>
+
+                <!-- Thumbnails -->
+                <div class="row thumbnails" th:if="${produto.imagens != null && !produto.imagens.isEmpty()}">
+                    <div class="col-3 mb-2" th:each="imagem : ${produto.imagens}">
+                        <div th:class="'thumbnail border p-1 ' + ${imagem.principal ? 'border-primary' : ''} + ' rounded cursor-pointer'"
+                             onclick="changeMainImage(this)">
+                            <img th:src="${imagem.caminho}"
+                                 class="img-fluid"
+                                 th:alt="${produto.nome}"
+                                 th:data-image-url="${imagem.caminho}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informações do produto -->
+        <div class="col-md-6">
+            <h1 class="mb-3" th:text="${produto.nome}">Nome do Produto</h1>
+            <p class="lead" th:text="${produto.descricao}">Descrição do produto</p>
+
+            <div class="mb-3">
+                <span class="badge bg-secondary" th:text="'Código: ' + ${produto.codigo}">Código</span>
+                <span class="badge bg-success" th:if="${produto.quantidadeEstoque > 0}">Em estoque</span>
+                <span class="badge bg-danger" th:if="${produto.quantidadeEstoque <= 0}">Fora de estoque</span>
+            </div>
+
+            <div class="mb-4">
+                <h2 class="text-primary fs-2">
+                    <span th:text="'R$ ' + ${#numbers.formatDecimal(produto.preco, 1, 2, 'POINT')}">R$ 0,00</span>
+                </h2>
+            </div>
+
+            <!-- Quantidade e botão de adicionar ao carrinho -->
+            <div class="mb-4">
+                <div class="row g-2 align-items-center">
+                    <div class="col-auto">
+                        <label for="quantidade" class="col-form-label">Quantidade:</label>
+                    </div>
+                    <div class="col-auto">
+                        <div class="input-group">
+                            <button class="btn btn-outline-secondary" type="button" onclick="decrementQuantity()">-</button>
+                            <input type="number" class="form-control text-center" id="quantidade" value="1" min="1"
+                                   th:max="${produto.quantidadeEstoque}" style="width: 60px;">
+                            <button class="btn btn-outline-secondary" type="button" onclick="incrementQuantity()">+</button>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <button class="btn btn-primary w-100"
+                                th:attr="data-produto-id=${produto.id}"
+                                onclick="adicionarAoCarrinhoComQuantidade()"
+                                th:disabled="${produto.quantidadeEstoque <= 0}">
+                            <i class="bi bi-cart-plus me-2"></i>
+                            Adicionar ao Carrinho
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informações adicionais -->
+            <div class="mt-5">
+                <div class="alert alert-primary">
+                    <i class="bi bi-truck me-2"></i> Frete grátis para compras acima de R$ 100,00
+                </div>
+                <div class="alert alert-success">
+                    <i class="bi bi-credit-card me-2"></i> Parcele em até 12x sem juros
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Rodapé -->
+<footer class="bg-dark text-white py-4 mt-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <h5>E-commerce</h5>
+                <p>Sua loja online de confiança</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <p>© 2025 E-commerce. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Carregar contagem de itens do carrinho quando a página carregar
+    window.addEventListener('DOMContentLoaded', function() {
+        atualizarContagemCarrinho();
+    });
+
+    // Função para trocar a imagem principal
+    function changeMainImage(thumbnail) {
+        const mainImage = document.getElementById('main-product-image');
+        const imageUrl = thumbnail.querySelector('img').getAttribute('data-image-url');
+        mainImage.src = imageUrl;
+
+        // Atualizar borda das thumbnails
+        document.querySelectorAll('.thumbnail').forEach(el => {
+            el.classList.remove('border-primary');
+        });
+        thumbnail.classList.add('border-primary');
+    }
+
+    // Funções para incrementar/decrementar quantidade
+    function incrementQuantity() {
+        const input = document.getElementById('quantidade');
+        const maxValue = parseInt(input.getAttribute('max') || 999);
+        let currentValue = parseInt(input.value || 1);
+
+        if (currentValue < maxValue) {
+            input.value = currentValue + 1;
+        }
+    }
+
+    function decrementQuantity() {
+        const input = document.getElementById('quantidade');
+        let currentValue = parseInt(input.value || 1);
+
+        if (currentValue > 1) {
+            input.value = currentValue - 1;
+        }
+    }
+
+    // Função para atualizar a contagem de itens no carrinho
+    function atualizarContagemCarrinho() {
+        const carrinho = JSON.parse(localStorage.getItem('carrinho')) || { itens: [] };
+        const totalItens = carrinho.itens.reduce((total, item) => total + item.quantidade, 0);
+
+        document.getElementById('cartItemCount').textContent = totalItens;
+    }
+
+    // Função para mostrar mensagem de sucesso
+    function mostrarMensagemSucesso() {
+        const mensagem = document.getElementById('successMessage');
+        mensagem.style.display = 'block';
+
+        // Esconder a mensagem após 3 segundos
+        setTimeout(() => {
+            mensagem.style.display = 'none';
+        }, 3000);
+    }
+
+    // Função para adicionar ao carrinho com quantidade específica
+    function adicionarAoCarrinhoComQuantidade() {
+        const produtoId = document.querySelector('[data-produto-id]').getAttribute('data-produto-id');
+        const quantidade = parseInt(document.getElementById('quantidade').value);
+
+        // Obter carrinho atual do localStorage
+        let carrinho = JSON.parse(localStorage.getItem('carrinho')) || { itens: [] };
+
+        // Verificar se o produto já está no carrinho
+        const itemExistente = carrinho.itens.find(item => item.produtoId === produtoId);
+
+        if (itemExistente) {
+            // Atualizar quantidade
+            itemExistente.quantidade += quantidade;
+        } else {
+            // Adicionar novo item
+            carrinho.itens.push({
+                produtoId: produtoId,
+                quantidade: quantidade
+            });
+        }
+
+        // Salvar carrinho atualizado
+        localStorage.setItem('carrinho', JSON.stringify(carrinho));
+
+        // Atualizar contagem de itens
+        atualizarContagemCarrinho();
+
+        // Feedback visual
+        mostrarMensagemSucesso();
+    }
+</script>
+</body>
+</html>

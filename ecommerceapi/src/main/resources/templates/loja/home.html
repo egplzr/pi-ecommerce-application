@@ -61,6 +61,7 @@
       </div>
     </div>
 
+
     <div th:each="produto : ${produtos}" class="col-md-4 col-lg-3 mb-4">
       <div class="card h-100 produto-card">
         <!-- Imagem do Produto -->
@@ -131,5 +132,51 @@
     </div>
   </div>
 </div>
+
+<script>
+  // Inicializar ao carregar a página
+  document.addEventListener('DOMContentLoaded', function() {
+      // Adicionar evento aos botões de adicionar ao carrinho
+      const addToCartButtons = document.querySelectorAll('.add-to-cart, [class*="adicionar-ao-carrinho"]');
+      addToCartButtons.forEach(button => {
+          button.addEventListener('click', function(event) {
+              const produtoId = this.getAttribute('data-produto-id');
+              adicionarAoCarrinho(produtoId, 1);
+
+              // Efeito visual
+              this.classList.add('cart-animation');
+              setTimeout(() => {
+                  this.classList.remove('cart-animation');
+              }, 500);
+          });
+      });
+  });
+
+  // Função para adicionar produto ao carrinho
+  function adicionarAoCarrinho(produtoId, quantidade) {
+      // Obter carrinho atual do localStorage
+      let carrinho = JSON.parse(localStorage.getItem('carrinho')) || { itens: [] };
+
+      // Verificar se o produto já está no carrinho
+      const itemExistente = carrinho.itens.find(item => item.produtoId === produtoId);
+
+      if (itemExistente) {
+          // Atualizar quantidade
+          itemExistente.quantidade += parseInt(quantidade);
+      } else {
+          // Adicionar novo item
+          carrinho.itens.push({
+              produtoId: produtoId,
+              quantidade: parseInt(quantidade)
+          });
+      }
+
+      // Salvar carrinho atualizado
+      localStorage.setItem('carrinho', JSON.stringify(carrinho));
+
+      // Feedback visual
+      alert('Produto adicionado ao carrinho!');
+  }
+</script>
 </body>
 </html>
