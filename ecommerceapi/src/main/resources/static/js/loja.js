@@ -98,3 +98,20 @@ function decrementQuantity() {
         input.value = currentValue - 1;
     }
 }
+
+// Função para atualizar a contagem de itens no carrinho
+function atualizarContagemCarrinho() {
+    fetch('/api/carrinho')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('cartItemCount').textContent = data.quantidadeItens;
+        })
+        .catch(error => {
+            console.error('Erro ao atualizar contagem do carrinho:', error);
+        });
+}
+
+// Chamar no carregamento da página
+document.addEventListener('DOMContentLoaded', function() {
+    atualizarContagemCarrinho();
+});
