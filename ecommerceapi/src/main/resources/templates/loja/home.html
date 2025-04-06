@@ -13,23 +13,22 @@
 <body>
 <div th:fragment="content">
   <!-- Banner Principal (opcional) -->
-  <div class="bg-primary text-white p-5 rounded mb-4">
-    <h1>Bem-vindo à nossa loja!</h1>
-    <p class="lead">Explore nossa seleção de produtos com os melhores preços.</p>
-    <a href="#produtos" class="btn btn-light">Ver Produtos</a>
-  </div>
-
-  <div class="text-end">
-    <a href="/login" class="btn btn-outline-light me-2">
-      <i class="bi bi-person-fill me-1"></i> Login
-    </a>
-    <a href="/loja/carrinho" class="btn btn-warning">
-      <i class="bi bi-cart-fill me-1"></i> Carrinho
-      <span class="badge bg-dark ms-1" id="cartItemCount">0</span>
-    </a>
-  </div>
-
-
+  <header class="p-5 rounded mb-4" style="background-color: #DA291C;">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center">
+        <h1 style="color: #FFC72C;">Mc Donalds</h1>
+        <div>
+          <a href="/login" class="btn btn-outline-light me-2">
+            <i class="bi bi-person-fill me-1"></i> Login
+          </a>
+          <a href="/loja/carrinho" class="btn btn-warning">
+            <i class="bi bi-cart-fill me-1"></i> Carrinho
+            <span class="badge bg-dark ms-1" id="cartItemCount">0</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
 
   <!-- Lista de Produtos -->
   <div id="produtos" class="row">
@@ -38,7 +37,7 @@
       <hr>
     </div>
 
-    <!-- Produtos -->
+    <!-- Mensagem quando não há produtos -->
     <div th:if="${produtos.empty}" class="col-12 text-center py-5">
       <div class="alert alert-info">
         <i class="bi bi-exclamation-circle-fill me-2"></i>
@@ -46,7 +45,7 @@
       </div>
     </div>
 
-
+    <!-- Exibição dos produtos -->
     <div th:each="produto : ${produtos}" class="col-md-4 col-lg-3 mb-4">
       <div class="card h-100 produto-card">
         <!-- Imagem do Produto -->
@@ -119,23 +118,15 @@
 </div>
 
 <script>
-  // Inicializar ao carregar a página
-  document.addEventListener('DOMContentLoaded', function() {
-      // Adicionar evento aos botões de adicionar ao carrinho
-      const addToCartButtons = document.querySelectorAll('.add-to-cart, [class*="adicionar-ao-carrinho"]');
-      addToCartButtons.forEach(button => {
-          button.addEventListener('click', function(event) {
-              const produtoId = this.getAttribute('data-produto-id');
-              adicionarAoCarrinho(produtoId, 1);
-
-              // Efeito visual
-              this.classList.add('cart-animation');
-              setTimeout(() => {
-                  this.classList.remove('cart-animation');
-              }, 500);
-          });
+  // Atualiza o contador de itens do carrinho no header
+  function updateCartCount() {
+      let carrinho = JSON.parse(localStorage.getItem('carrinho')) || { itens: [] };
+      let count = 0;
+      carrinho.itens.forEach(item => {
+          count += item.quantidade;
       });
-  });
+      document.getElementById('cartItemCount').innerText = count;
+  }
 
   // Função para adicionar produto ao carrinho
   function adicionarAoCarrinho(produtoId, quantidade) {
@@ -159,9 +150,31 @@
       // Salvar carrinho atualizado
       localStorage.setItem('carrinho', JSON.stringify(carrinho));
 
+      // Atualizar o contador de itens no header
+      updateCartCount();
+
       // Feedback visual
       alert('Produto adicionado ao carrinho!');
   }
+
+  // Inicializar ao carregar a página
+  document.addEventListener('DOMContentLoaded', function() {
+      updateCartCount();
+      // Adicionar evento aos botões de adicionar ao carrinho
+      const addToCartButtons = document.querySelectorAll('.add-to-cart, [class*="adicionar-ao-carrinho"]');
+      addToCartButtons.forEach(button => {
+          button.addEventListener('click', function(event) {
+              const produtoId = this.getAttribute('data-produto-id');
+              adicionarAoCarrinho(produtoId, 1);
+
+              // Efeito visual
+              this.classList.add('cart-animation');
+              setTimeout(() => {
+                  this.classList.remove('cart-animation');
+              }, 500);
+          });
+      });
+  });
 </script>
 </body>
 </html>
