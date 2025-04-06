@@ -1,190 +1,38 @@
 <!DOCTYPE html>
-<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Carrinho de Compras - E-commerce</title>
-    <meta name="_csrf" th:content="${_csrf.token}"/>
-    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/static/css/loja.css">
 </head>
 <body>
-<!-- Cabeçalho -->
-<header class="bg-primary text-white py-3">
+<!-- Cabeçalho com padrão Mc Donalds -->
+<header class="p-3 rounded mb-4" style="background-color: #DA291C;">
     <div class="container">
-        <div class="row align-items-center">
-            <div class="col-md-6">
-                <h1 class="fs-3 mb-0">
-                    <a href="/loja" class="text-white text-decoration-none">E-commerce</a>
-                </h1>
-            </div>
-            <div class="col-md-6 text-end">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 style="color: #FFC72C;">
+                <a href="/loja" style="color: inherit; text-decoration: none;">Mc Donalds</a>
+            </h1>
+            <div>
+                <a href="/login" class="btn btn-outline-light me-2">
+                    <i class="bi bi-person-fill me-1"></i> Login
+                </a>
                 <a href="/loja/carrinho" class="btn btn-warning">
-                    <i class="bi bi-cart-fill me-2"></i>
-                    Carrinho
-                    <span class="badge bg-dark" id="cartItemCount" th:text="${carrinho.quantidadeItens}">0</span>
+                    <i class="bi bi-cart-fill me-1"></i> Carrinho
+                    <span class="badge bg-dark" id="cartItemCount">0</span>
                 </a>
             </div>
         </div>
     </div>
 </header>
 
-<!-- Navegação -->
-<div class="bg-light py-2">
-    <div class="container">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb m-0">
-                <li class="breadcrumb-item"><a href="/loja">Início</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Carrinho de Compras</li>
-            </ol>
-        </nav>
-    </div>
-</div>
-
 <!-- Conteúdo principal -->
 <main class="container py-4">
     <h1 class="mb-4">Carrinho de Compras</h1>
-
-    <!-- Carrinho vazio -->
-    <div th:if="${carrinho.itens.isEmpty()}" class="alert alert-info">
-        <i class="bi bi-cart-x me-2"></i> Seu carrinho está vazio.
-        <a href="/loja" class="alert-link">Clique aqui</a> para continuar comprando.
-    </div>
-
-    <!-- Carrinho com itens -->
-    <div th:if="${!carrinho.itens.isEmpty()}" class="row">
-        <!-- Lista de produtos -->
-        <div class="col-lg-8">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Produtos</h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                            <tr>
-                                <th>Produto</th>
-                                <th>Preço</th>
-                                <th>Quantidade</th>
-                                <th>Subtotal</th>
-                                <th>Ações</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr th:each="item : ${carrinho.itens}">
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <img th:src="${item.imagemUrl}"
-                                             class="me-3"
-                                             alt="Imagem do produto"
-                                             style="width: 50px; height: 50px; object-fit: contain;">
-                                        <div>
-                                            <h6 class="mb-0" th:text="${item.nome}">Nome do Produto</h6>
-                                            <small class="text-muted" th:text="'Código: ' + ${item.codigo}">Código</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td th:text="'R$ ' + ${#numbers.formatDecimal(item.preco, 1, 2, 'POINT')}">R$ 0,00</td>
-                                <td>
-                                    <div class="input-group input-group-sm" style="width: 120px;">
-                                        <button class="btn btn-outline-secondary" type="button"
-                                                th:onclick="'diminuirQuantidade(' + ${item.produtoId} + ')'">
-                                            <i class="bi bi-dash"></i>
-                                        </button>
-                                        <input type="number" class="form-control text-center"
-                                               th:value="${item.quantidade}" min="1"
-                                               th:data-produto-id="${item.produtoId}"
-                                               onchange="atualizarQuantidade(this)">
-                                        <button class="btn btn-outline-secondary" type="button"
-                                                th:onclick="'aumentarQuantidade(' + ${item.produtoId} + ')'">
-                                            <i class="bi bi-plus"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                                <td th:text="'R$ ' + ${#numbers.formatDecimal(item.subtotal, 1, 2, 'POINT')}">R$ 0,00</td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-danger"
-                                            th:onclick="'removerDoCarrinho(' + ${item.produtoId} + ')'">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="card-footer text-end">
-                    <button class="btn btn-outline-danger" onclick="limparCarrinho()">
-                        <i class="bi bi-trash me-2"></i>Limpar Carrinho
-                    </button>
-                    <a href="/loja" class="btn btn-outline-primary">
-                        <i class="bi bi-cart-plus me-2"></i>Continuar Comprando
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Resumo do pedido -->
-        <div class="col-lg-4">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Resumo do Pedido</h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex justify-content-between mb-3">
-                        <span>Subtotal</span>
-                        <span th:text="'R$ ' + ${#numbers.formatDecimal(carrinho.valorTotal, 1, 2, 'POINT')}">R$ 0,00</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-3">
-                        <span>Frete</span>
-                        <span th:text="${carrinho.valorFrete.compareTo(T(java.math.BigDecimal).ZERO) == 0 ? 'Grátis' : 'R$ ' + #numbers.formatDecimal(carrinho.valorFrete, 1, 2, 'POINT')}">R$ 0,00</span>
-                    </div>
-
-                    <!-- Calculadora de frete -->
-                    <div class="mb-3">
-                        <label for="cep" class="form-label">Calcular Frete</label>
-                        <div class="input-group mb-3">
-                            <input type="text" class="form-control" id="cep" placeholder="Digite seu CEP">
-                            <button class="btn btn-outline-primary" type="button" onclick="calcularFrete()">Calcular</button>
-                        </div>
-                    </div>
-
-                    <hr>
-
-                    <div class="d-flex justify-content-between fw-bold">
-                        <span>Total</span>
-                        <span class="text-primary" th:text="'R$ ' + ${#numbers.formatDecimal(carrinho.valorTotalComFrete, 1, 2, 'POINT')}">R$ 0,00</span>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    <button class="btn btn-primary w-100" onclick="finalizarCompra()">
-                        <i class="bi bi-credit-card me-2"></i>Finalizar Compra
-                    </button>
-                </div>
-            </div>
-
-            <!-- Informações adicionais -->
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="card-title">Informações</h6>
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2">
-                            <i class="bi bi-truck text-primary me-2"></i> Frete grátis para compras acima de R$ 100,00
-                        </li>
-                        <li class="mb-2">
-                            <i class="bi bi-credit-card text-primary me-2"></i> Parcele em até 12x sem juros
-                        </li>
-                        <li>
-                            <i class="bi bi-shield-check text-primary me-2"></i> Compra segura garantida
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div id="cartContainer"></div>
 </main>
 
 <!-- Rodapé -->
@@ -192,7 +40,7 @@
     <div class="container">
         <div class="row">
             <div class="col-md-6">
-                <h5>E-commerce</h5>
+                <h5>Mc Donalds</h5>
                 <p>Sua loja online de confiança</p>
             </div>
             <div class="col-md-6 text-md-end">
@@ -203,129 +51,172 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/static/js/csrf-token.js"></script>
 <script>
-    // Função para aumentar a quantidade
-    function aumentarQuantidade(produtoId) {
-        const input = document.querySelector(`input[data-produto-id="${produtoId}"]`);
-        const quantidade = parseInt(input.value) + 1;
-        atualizarQuantidadeNoCarrinho(produtoId, quantidade);
+    // Função para renderizar o carrinho a partir do localStorage
+    function renderCart() {
+      const cartContainer = document.getElementById('cartContainer');
+      const carrinho = JSON.parse(localStorage.getItem('carrinho')) || { itens: [] };
+
+      if (carrinho.itens.length === 0) {
+          cartContainer.innerHTML = `
+              <div class="alert alert-info">
+                  <i class="bi bi-cart-x me-2"></i> Seu carrinho está vazio. <a href="/loja" class="alert-link">Clique aqui</a> para continuar comprando.
+              </div>
+          `;
+          updateCartCount();
+          return;
+      }
+
+      let tableRows = '';
+      let total = 0;
+      carrinho.itens.forEach(item => {
+          // Calcula o subtotal (supondo que item.preco seja um número)
+          const subtotal = item.preco * item.quantidade;
+          total += subtotal;
+          tableRows += `
+              <tr>
+                  <td>
+                      <div class="d-flex align-items-center">
+                          <img src="${item.imagemUrl}" alt="${item.nome}" style="width: 50px; height: 50px; object-fit: contain;" class="me-3">
+                          <div>
+                              <h6 class="mb-0">${item.nome}</h6>
+                          </div>
+                      </div>
+                  </td>
+                  <td>R$ ${item.preco.toFixed(2)}</td>
+                  <td>
+                      <div class="input-group input-group-sm" style="width: 120px;">
+                          <button class="btn btn-outline-secondary" onclick="updateQuantity(${item.produtoId}, ${item.quantidade - 1})">
+                              <i class="bi bi-dash"></i>
+                          </button>
+                          <input type="number" class="form-control text-center" value="${item.quantidade}" min="1" onchange="updateQuantity(${item.produtoId}, this.value)">
+                          <button class="btn btn-outline-secondary" onclick="updateQuantity(${item.produtoId}, ${item.quantidade + 1})">
+                              <i class="bi bi-plus"></i>
+                          </button>
+                      </div>
+                  </td>
+                  <td>R$ ${subtotal.toFixed(2)}</td>
+                  <td>
+                      <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${item.produtoId})">
+                          <i class="bi bi-trash"></i>
+                      </button>
+                  </td>
+              </tr>
+          `;
+      });
+
+      cartContainer.innerHTML = `
+          <div class="row">
+              <div class="col-lg-8">
+                  <div class="card mb-4">
+                      <div class="card-header">
+                          <h5 class="mb-0">Produtos</h5>
+                      </div>
+                      <div class="card-body p-0">
+                          <div class="table-responsive">
+                              <table class="table table-hover mb-0">
+                                  <thead class="table-light">
+                                      <tr>
+                                          <th>Produto</th>
+                                          <th>Preço</th>
+                                          <th>Quantidade</th>
+                                          <th>Subtotal</th>
+                                          <th>Ações</th>
+                                      </tr>
+                                  </thead>
+                                  <tbody>
+                                      ${tableRows}
+                                  </tbody>
+                              </table>
+                          </div>
+                      </div>
+                      <div class="card-footer text-end">
+                          <button class="btn btn-outline-danger" onclick="clearCart()">
+                              <i class="bi bi-trash me-2"></i>Limpar Carrinho
+                          </button>
+                          <a href="/loja" class="btn btn-outline-primary">
+                              <i class="bi bi-cart-plus me-2"></i>Continuar Comprando
+                          </a>
+                      </div>
+                  </div>
+              </div>
+              <div class="col-lg-4">
+                  <div class="card mb-4">
+                      <div class="card-header">
+                          <h5 class="mb-0">Resumo do Pedido</h5>
+                      </div>
+                      <div class="card-body">
+                          <div class="d-flex justify-content-between mb-3">
+                              <span>Subtotal</span>
+                              <span>R$ ${total.toFixed(2)}</span>
+                          </div>
+                          <div class="d-flex justify-content-between mb-3">
+                              <span>Frete</span>
+                              <span>Grátis</span>
+                          </div>
+                          <hr>
+                          <div class="d-flex justify-content-between fw-bold">
+                              <span>Total</span>
+                              <span class="text-primary">R$ ${total.toFixed(2)}</span>
+                          </div>
+                      </div>
+                      <div class="card-footer">
+                          <button class="btn btn-primary w-100" onclick="finalizePurchase()">
+                              <i class="bi bi-credit-card me-2"></i>Finalizar Compra
+                          </button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      `;
+      updateCartCount();
     }
 
-    // Função para diminuir a quantidade
-    function diminuirQuantidade(produtoId) {
-        const input = document.querySelector(`input[data-produto-id="${produtoId}"]`);
-        const quantidade = parseInt(input.value) - 1;
-        if (quantidade >= 1) {
-            atualizarQuantidadeNoCarrinho(produtoId, quantidade);
-        }
+    // Atualiza o contador de itens no cabeçalho
+    function updateCartCount() {
+      const carrinho = JSON.parse(localStorage.getItem('carrinho')) || { itens: [] };
+      let count = 0;
+      carrinho.itens.forEach(item => count += item.quantidade);
+      document.getElementById('cartItemCount').textContent = count;
     }
 
-    // Função para atualizar quantidade quando o input é alterado diretamente
-    function atualizarQuantidade(input) {
-        const produtoId = input.getAttribute('data-produto-id');
-        const quantidade = parseInt(input.value);
-        if (quantidade >= 1) {
-            atualizarQuantidadeNoCarrinho(produtoId, quantidade);
-        } else {
-            input.value = 1;
-            atualizarQuantidadeNoCarrinho(produtoId, 1);
-        }
+    // Atualiza a quantidade de um item no carrinho
+    function updateQuantity(produtoId, newQuantity) {
+      newQuantity = parseInt(newQuantity);
+      if (newQuantity < 1) newQuantity = 1;
+      const carrinho = JSON.parse(localStorage.getItem('carrinho')) || { itens: [] };
+      carrinho.itens = carrinho.itens.map(item => {
+          if (item.produtoId == produtoId) {
+              item.quantidade = newQuantity;
+          }
+          return item;
+      });
+      localStorage.setItem('carrinho', JSON.stringify(carrinho));
+      renderCart();
     }
 
-    // Função para atualizar quantidade no carrinho
-    function atualizarQuantidadeNoCarrinho(produtoId, quantidade) {
-        fetch(`/api/carrinho/atualizar?produtoId=${produtoId}&quantidade=${quantidade}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Recarregar a página para atualizar os valores
-            window.location.reload();
-        })
-        .catch(error => {
-            console.error('Erro ao atualizar quantidade:', error);
-            alert('Erro ao atualizar quantidade. Por favor, tente novamente.');
-        });
+    // Remove um item do carrinho
+    function removeFromCart(produtoId) {
+      let carrinho = JSON.parse(localStorage.getItem('carrinho')) || { itens: [] };
+      carrinho.itens = carrinho.itens.filter(item => item.produtoId != produtoId);
+      localStorage.setItem('carrinho', JSON.stringify(carrinho));
+      renderCart();
     }
 
-    // Função para remover item do carrinho
-    function removerDoCarrinho(produtoId) {
-        if (confirm('Tem certeza que deseja remover este item do carrinho?')) {
-            fetch(`/api/carrinho/remover/${produtoId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Recarregar a página para atualizar os valores
-                window.location.reload();
-            })
-            .catch(error => {
-                console.error('Erro ao remover item:', error);
-                alert('Erro ao remover item. Por favor, tente novamente.');
-            });
-        }
+    // Limpa todo o carrinho
+    function clearCart() {
+      if (confirm('Tem certeza que deseja limpar o carrinho?')) {
+          localStorage.removeItem('carrinho');
+          renderCart();
+      }
     }
 
-    // Função para limpar o carrinho
-    function limparCarrinho() {
-        if (confirm('Tem certeza que deseja limpar o carrinho?')) {
-            fetch('/api/carrinho/limpar', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Recarregar a página para atualizar os valores
-                window.location.reload();
-            })
-            .catch(error => {
-                console.error('Erro ao limpar carrinho:', error);
-                alert('Erro ao limpar carrinho. Por favor, tente novamente.');
-            });
-        }
+    // Finaliza a compra (funcionalidade futura)
+    function finalizePurchase() {
+      alert('Funcionalidade de finalização de compra será implementada em versões futuras.');
     }
 
-    // Função para calcular frete
-    function calcularFrete() {
-        const cep = document.getElementById('cep').value;
-
-        if (!cep) {
-            alert('Por favor, digite um CEP válido');
-            return;
-        }
-
-        fetch(`/api/carrinho/calcular-frete?cep=${cep}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Recarregar a página para atualizar os valores
-            window.location.reload();
-        })
-        .catch(error => {
-            console.error('Erro ao calcular frete:', error);
-            alert('Erro ao calcular frete. Por favor, tente novamente.');
-        });
-    }
-
-    // Função para finalizar compra
-    function finalizarCompra() {
-        alert('Funcionalidade de finalização de compra será implementada em versões futuras.');
-        // No futuro, redirecionar para página de checkout
-        // window.location.href = '/loja/checkout';
-    }
+    window.addEventListener('DOMContentLoaded', renderCart);
 </script>
 </body>
 </html>
