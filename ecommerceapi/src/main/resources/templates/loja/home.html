@@ -20,31 +20,6 @@
   </div>
 
   <!-- Filtros -->
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-body">
-          <form action="/loja" method="get">
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label for="nome" class="form-label">Nome do Produto</label>
-                <input type="text" class="form-control" id="nome" name="nome"
-                       th:value="${filtroNome}">
-              </div>
-              <div class="col-md-4">
-                <label for="codigo" class="form-label">Código</label>
-                <input type="text" class="form-control" id="codigo" name="codigo"
-                       th:value="${filtroCodigo}">
-              </div>
-              <div class="col-md-2 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary w-100">Filtrar</button>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- Lista de Produtos -->
   <div id="produtos" class="row">
