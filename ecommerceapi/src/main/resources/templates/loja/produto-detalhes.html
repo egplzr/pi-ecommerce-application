@@ -175,10 +175,10 @@
         }
     }
 
-    // Atualiza a contagem de itens do carrinho
+    // Atualiza a contagem de itens do carrinho usando a chave "cart"
     function atualizarContagemCarrinho() {
-        const carrinho = JSON.parse(localStorage.getItem('carrinho')) || { itens: [] };
-        const totalItens = carrinho.itens.reduce((total, item) => total + item.quantidade, 0);
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        const totalItens = cart.reduce((total, item) => total + item.quantidade, 0);
         document.getElementById('cartItemCount').textContent = totalItens;
     }
 
@@ -191,21 +191,21 @@
         }, 3000);
     }
 
-    // Adiciona o produto ao carrinho com a quantidade especificada
+    // Adiciona o produto ao carrinho com a quantidade especificada usando a chave "cart"
     function adicionarAoCarrinhoComQuantidade() {
         const produtoId = document.querySelector('[data-produto-id]').getAttribute('data-produto-id');
         const quantidade = parseInt(document.getElementById('quantidade').value);
-        let carrinho = JSON.parse(localStorage.getItem('carrinho')) || { itens: [] };
-        const itemExistente = carrinho.itens.find(item => item.produtoId === produtoId);
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        const itemExistente = cart.find(item => item.produtoId === produtoId);
         if (itemExistente) {
             itemExistente.quantidade += quantidade;
         } else {
-            carrinho.itens.push({
+            cart.push({
                 produtoId: produtoId,
                 quantidade: quantidade
             });
         }
-        localStorage.setItem('carrinho', JSON.stringify(carrinho));
+        localStorage.setItem('cart', JSON.stringify(cart));
         atualizarContagemCarrinho();
         mostrarMensagemSucesso();
     }

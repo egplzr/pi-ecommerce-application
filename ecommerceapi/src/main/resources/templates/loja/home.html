@@ -126,37 +126,37 @@
 </div>
 
 <script>
-  // Atualiza o contador de itens do carrinho no header
+  // Atualiza o contador de itens do carrinho no header usando a chave "cart"
   function updateCartCount() {
-      let carrinho = JSON.parse(localStorage.getItem('carrinho')) || { itens: [] };
+      let cart = JSON.parse(localStorage.getItem('cart')) || [];
       let count = 0;
-      carrinho.itens.forEach(item => {
+      cart.forEach(item => {
           count += item.quantidade;
       });
       document.getElementById('cartItemCount').innerText = count;
   }
 
-  // Função para adicionar produto ao carrinho
+  // Função para adicionar produto ao carrinho usando a chave "cart"
   function adicionarAoCarrinho(produtoId, quantidade) {
-      // Obter carrinho atual do localStorage
-      let carrinho = JSON.parse(localStorage.getItem('carrinho')) || { itens: [] };
+      // Obter o carrinho atual do localStorage
+      let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
       // Verificar se o produto já está no carrinho
-      const itemExistente = carrinho.itens.find(item => item.produtoId === produtoId);
+      const itemExistente = cart.find(item => item.produtoId === produtoId);
 
       if (itemExistente) {
           // Atualizar quantidade
           itemExistente.quantidade += parseInt(quantidade);
       } else {
           // Adicionar novo item
-          carrinho.itens.push({
+          cart.push({
               produtoId: produtoId,
               quantidade: parseInt(quantidade)
           });
       }
 
-      // Salvar carrinho atualizado
-      localStorage.setItem('carrinho', JSON.stringify(carrinho));
+      // Salvar o carrinho atualizado usando a chave "cart"
+      localStorage.setItem('cart', JSON.stringify(cart));
 
       // Atualizar o contador de itens no header
       updateCartCount();
