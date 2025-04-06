@@ -52,131 +52,132 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Função para renderizar o carrinho a partir do localStorage
+    // Função para renderizar o carrinho usando a chave "cart" do localStorage
     function renderCart() {
       const cartContainer = document.getElementById('cartContainer');
-      const carrinho = JSON.parse(localStorage.getItem('carrinho')) || { itens: [] };
+      const cart = JSON.parse(localStorage.getItem('cart')) || [];
 
-      if (carrinho.itens.length === 0) {
-          cartContainer.innerHTML = `
-              <div class="alert alert-info">
-                  <i class="bi bi-cart-x me-2"></i> Seu carrinho está vazio. <a href="/loja" class="alert-link">Clique aqui</a> para continuar comprando.
-              </div>
-          `;
-          updateCartCount();
-          return;
+      if (cart.length === 0) {
+        cartContainer.innerHTML = `
+          <div class="alert alert-info">
+            <i class="bi bi-cart-x me-2"></i> Seu carrinho está vazio.
+            <a href="/loja" class="alert-link">Clique aqui</a> para continuar comprando.
+          </div>
+        `;
+        updateCartCount();
+        return;
       }
 
       let tableRows = '';
       let total = 0;
-      carrinho.itens.forEach(item => {
-          // Calcula o subtotal (supondo que item.preco seja um número)
-          const subtotal = item.preco * item.quantidade;
-          total += subtotal;
-          tableRows += `
-              <tr>
-                  <td>
-                      <div class="d-flex align-items-center">
-                          <img src="${item.imagemUrl}" alt="${item.nome}" style="width: 50px; height: 50px; object-fit: contain;" class="me-3">
-                          <div>
-                              <h6 class="mb-0">${item.nome}</h6>
-                          </div>
-                      </div>
-                  </td>
-                  <td>R$ ${item.preco.toFixed(2)}</td>
-                  <td>
-                      <div class="input-group input-group-sm" style="width: 120px;">
-                          <button class="btn btn-outline-secondary" onclick="updateQuantity(${item.produtoId}, ${item.quantidade - 1})">
-                              <i class="bi bi-dash"></i>
-                          </button>
-                          <input type="number" class="form-control text-center" value="${item.quantidade}" min="1" onchange="updateQuantity(${item.produtoId}, this.value)">
-                          <button class="btn btn-outline-secondary" onclick="updateQuantity(${item.produtoId}, ${item.quantidade + 1})">
-                              <i class="bi bi-plus"></i>
-                          </button>
-                      </div>
-                  </td>
-                  <td>R$ ${subtotal.toFixed(2)}</td>
-                  <td>
-                      <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${item.produtoId})">
-                          <i class="bi bi-trash"></i>
-                      </button>
-                  </td>
-              </tr>
-          `;
+      cart.forEach(item => {
+        // Calcula o subtotal e total (garantindo que item.preco seja um número)
+        const subtotal = item.preco * item.quantidade;
+        total += subtotal;
+        tableRows += `
+          <tr>
+            <td>
+              <div class="d-flex align-items-center">
+                <img src="${item.imagemUrl}" alt="${item.nome}" style="width: 50px; height: 50px; object-fit: contain;" class="me-3">
+                <div>
+                  <h6 class="mb-0">${item.nome}</h6>
+                </div>
+              </div>
+            </td>
+            <td>R$ ${item.preco.toFixed(2)}</td>
+            <td>
+              <div class="input-group input-group-sm" style="width: 120px;">
+                <button class="btn btn-outline-secondary" onclick="updateQuantity(${item.id}, ${item.quantidade - 1})">
+                  <i class="bi bi-dash"></i>
+                </button>
+                <input type="number" class="form-control text-center" value="${item.quantidade}" min="1" onchange="updateQuantity(${item.id}, this.value)">
+                <button class="btn btn-outline-secondary" onclick="updateQuantity(${item.id}, ${item.quantidade + 1})">
+                  <i class="bi bi-plus"></i>
+                </button>
+              </div>
+            </td>
+            <td>R$ ${subtotal.toFixed(2)}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${item.id})">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `;
       });
 
       cartContainer.innerHTML = `
-          <div class="row">
-              <div class="col-lg-8">
-                  <div class="card mb-4">
-                      <div class="card-header">
-                          <h5 class="mb-0">Produtos</h5>
-                      </div>
-                      <div class="card-body p-0">
-                          <div class="table-responsive">
-                              <table class="table table-hover mb-0">
-                                  <thead class="table-light">
-                                      <tr>
-                                          <th>Produto</th>
-                                          <th>Preço</th>
-                                          <th>Quantidade</th>
-                                          <th>Subtotal</th>
-                                          <th>Ações</th>
-                                      </tr>
-                                  </thead>
-                                  <tbody>
-                                      ${tableRows}
-                                  </tbody>
-                              </table>
-                          </div>
-                      </div>
-                      <div class="card-footer text-end">
-                          <button class="btn btn-outline-danger" onclick="clearCart()">
-                              <i class="bi bi-trash me-2"></i>Limpar Carrinho
-                          </button>
-                          <a href="/loja" class="btn btn-outline-primary">
-                              <i class="bi bi-cart-plus me-2"></i>Continuar Comprando
-                          </a>
-                      </div>
-                  </div>
+        <div class="row">
+          <div class="col-lg-8">
+            <div class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0">Produtos</h5>
               </div>
-              <div class="col-lg-4">
-                  <div class="card mb-4">
-                      <div class="card-header">
-                          <h5 class="mb-0">Resumo do Pedido</h5>
-                      </div>
-                      <div class="card-body">
-                          <div class="d-flex justify-content-between mb-3">
-                              <span>Subtotal</span>
-                              <span>R$ ${total.toFixed(2)}</span>
-                          </div>
-                          <div class="d-flex justify-content-between mb-3">
-                              <span>Frete</span>
-                              <span>Grátis</span>
-                          </div>
-                          <hr>
-                          <div class="d-flex justify-content-between fw-bold">
-                              <span>Total</span>
-                              <span class="text-primary">R$ ${total.toFixed(2)}</span>
-                          </div>
-                      </div>
-                      <div class="card-footer">
-                          <button class="btn btn-primary w-100" onclick="finalizePurchase()">
-                              <i class="bi bi-credit-card me-2"></i>Finalizar Compra
-                          </button>
-                      </div>
-                  </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Produto</th>
+                        <th>Preço</th>
+                        <th>Quantidade</th>
+                        <th>Subtotal</th>
+                        <th>Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${tableRows}
+                    </tbody>
+                  </table>
+                </div>
               </div>
+              <div class="card-footer text-end">
+                <button class="btn btn-outline-danger" onclick="clearCart()">
+                  <i class="bi bi-trash me-2"></i>Limpar Carrinho
+                </button>
+                <a href="/loja" class="btn btn-outline-primary">
+                  <i class="bi bi-cart-plus me-2"></i>Continuar Comprando
+                </a>
+              </div>
+            </div>
           </div>
+          <div class="col-lg-4">
+            <div class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0">Resumo do Pedido</h5>
+              </div>
+              <div class="card-body">
+                <div class="d-flex justify-content-between mb-3">
+                  <span>Subtotal</span>
+                  <span>R$ ${total.toFixed(2)}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                  <span>Frete</span>
+                  <span>Grátis</span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between fw-bold">
+                  <span>Total</span>
+                  <span class="text-primary">R$ ${total.toFixed(2)}</span>
+                </div>
+              </div>
+              <div class="card-footer">
+                <button class="btn btn-primary w-100" onclick="finalizePurchase()">
+                  <i class="bi bi-credit-card me-2"></i>Finalizar Compra
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       `;
       updateCartCount();
     }
 
-    // Atualiza o contador de itens no cabeçalho
+    // Atualiza o contador de itens no cabeçalho usando a chave "cart"
     function updateCartCount() {
-      const carrinho = JSON.parse(localStorage.getItem('carrinho')) || { itens: [] };
+      const cart = JSON.parse(localStorage.getItem('cart')) || [];
       let count = 0;
-      carrinho.itens.forEach(item => count += item.quantidade);
+      cart.forEach(item => count += item.quantidade);
       document.getElementById('cartItemCount').textContent = count;
     }
 
@@ -184,30 +185,30 @@
     function updateQuantity(produtoId, newQuantity) {
       newQuantity = parseInt(newQuantity);
       if (newQuantity < 1) newQuantity = 1;
-      const carrinho = JSON.parse(localStorage.getItem('carrinho')) || { itens: [] };
-      carrinho.itens = carrinho.itens.map(item => {
-          if (item.produtoId == produtoId) {
-              item.quantidade = newQuantity;
-          }
-          return item;
+      let cart = JSON.parse(localStorage.getItem('cart')) || [];
+      cart = cart.map(item => {
+        if (item.id == produtoId) {
+          item.quantidade = newQuantity;
+        }
+        return item;
       });
-      localStorage.setItem('carrinho', JSON.stringify(carrinho));
+      localStorage.setItem('cart', JSON.stringify(cart));
       renderCart();
     }
 
     // Remove um item do carrinho
     function removeFromCart(produtoId) {
-      let carrinho = JSON.parse(localStorage.getItem('carrinho')) || { itens: [] };
-      carrinho.itens = carrinho.itens.filter(item => item.produtoId != produtoId);
-      localStorage.setItem('carrinho', JSON.stringify(carrinho));
+      let cart = JSON.parse(localStorage.getItem('cart')) || [];
+      cart = cart.filter(item => item.id != produtoId);
+      localStorage.setItem('cart', JSON.stringify(cart));
       renderCart();
     }
 
     // Limpa todo o carrinho
     function clearCart() {
       if (confirm('Tem certeza que deseja limpar o carrinho?')) {
-          localStorage.removeItem('carrinho');
-          renderCart();
+        localStorage.removeItem('cart');
+        renderCart();
       }
     }
 
