@@ -13,7 +13,7 @@
 <body>
 <div th:fragment="content">
   <!-- Banner Principal (opcional) -->
-  <header class="p-5 rounded mb-4" style="background-color: #DA291C;">
+  <header class="p-3 rounded mb-4" style="background-color: #DA291C;">
     <div class="container">
       <div class="d-flex justify-content-between align-items-center">
         <h1 style="color: #FFC72C;">Mc Donalds</h1>
@@ -32,11 +32,6 @@
 
   <!-- Lista de Produtos -->
   <div id="produtos" class="row">
-    <div class="col-12 mb-3">
-      <h2>Produtos</h2>
-      <hr>
-    </div>
-
     <!-- Mensagem quando não há produtos -->
     <div th:if="${produtos.empty}" class="col-12 text-center py-5">
       <div class="alert alert-info">
@@ -65,12 +60,20 @@
           <h5 class="card-title" th:text="${produto.nome}">Nome do Produto</h5>
           <p class="card-text text-truncate" th:text="${produto.descricao}">Descrição breve do produto...</p>
           <div class="mt-auto">
-            <p class="card-text fs-5 fw-bold text-primary mb-2">
+            <!-- Valor do produto em preto -->
+            <p class="card-text fs-5 fw-bold text-dark mb-2">
               <span th:text="'R$ ' + ${#numbers.formatDecimal(produto.preco, 1, 2, 'POINT')}">R$ 0,00</span>
             </p>
             <div class="d-grid gap-2">
-              <a th:href="@{/loja/produto/{id}(id=${produto.id})}" class="btn btn-outline-primary">Ver Detalhes</a>
-              <button class="btn btn-primary add-to-cart"
+              <!-- Botão Ver Detalhes com fundo preto e letras amarelas -->
+              <a th:href="@{/loja/produto/{id}(id=${produto.id})}"
+                 class="btn"
+                 style="background-color: #000; border-color: #000; color: #FFC72C;">
+                Ver Detalhes
+              </a>
+              <!-- Botão Adicionar ao Carrinho -->
+              <button class="btn add-to-cart"
+                      style="background-color: #DA291C; border-color: #DA291C; color: #fff;"
                       th:attr="data-produto-id=${produto.id}">
                 <i class="bi bi-cart-plus me-1"></i> Adicionar ao Carrinho
               </button>
@@ -90,7 +93,8 @@
           <li class="page-item" th:classappend="${currentPage == 0 ? 'disabled' : ''}">
             <a class="page-link"
                th:href="@{/loja(page=${currentPage - 1}, size=12, nome=${filtroNome}, codigo=${filtroCodigo})}"
-               aria-label="Anterior">
+               aria-label="Anterior"
+               style="background-color: #FFC72C; border-color: #DA291C; color: #000;">
               <span aria-hidden="true">&laquo;</span>
             </a>
           </li>
@@ -100,14 +104,18 @@
               th:classappend="${currentPage == i ? 'active' : ''}">
             <a class="page-link"
                th:href="@{/loja(page=${i}, size=12, nome=${filtroNome}, codigo=${filtroCodigo})}"
-               th:text="${i + 1}">1</a>
+               th:text="${i + 1}"
+               th:style="${currentPage == i} ? 'background-color: #DA291C; border-color: #DA291C; color: #fff;' : 'background-color: #FFC72C; border-color: #DA291C; color: #000;'">
+              1
+            </a>
           </li>
 
           <!-- Botão Próximo -->
           <li class="page-item" th:classappend="${currentPage == totalPages - 1 ? 'disabled' : ''}">
             <a class="page-link"
                th:href="@{/loja(page=${currentPage + 1}, size=12, nome=${filtroNome}, codigo=${filtroCodigo})}"
-               aria-label="Próximo">
+               aria-label="Próximo"
+               style="background-color: #FFC72C; border-color: #DA291C; color: #000;">
               <span aria-hidden="true">&raquo;</span>
             </a>
           </li>

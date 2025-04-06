@@ -10,29 +10,12 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/static/css/loja.css">
     <style>
-        /* Estilos adicionais inline para garantir que funcionem */
-        .product-gallery .main-image {
-            height: 350px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
+        /* Estilos adicionais para o carrossel de imagens */
+        .carousel-item img {
+            max-height: 350px;
+            object-fit: contain;
         }
-
-        .thumbnail {
-            cursor: pointer;
-            transition: border-color 0.3s ease;
-            height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        .thumbnail:hover {
-            border-color: #0d6efd !important;
-        }
-
+        /* Mensagem de sucesso */
         .success-message {
             position: fixed;
             top: 20px;
@@ -53,71 +36,55 @@
     <i class="bi bi-check-circle me-2"></i> Produto adicionado ao carrinho!
 </div>
 
-<!-- Cabeçalho -->
-<header class="bg-primary text-white py-3">
+<!-- Cabeçalho com padrão Mc Donalds -->
+<header class="p-3 rounded mb-4" style="background-color: #DA291C;">
     <div class="container">
-        <div class="row align-items-center">
-            <div class="col-md-6">
-                <h1 class="fs-3 mb-0">
-                    <a href="/loja" class="text-white text-decoration-none">E-commerce</a>
-                </h1>
-            </div>
-            <div class="col-md-6 text-end">
-                <a href="/loja/carrinho" class="btn btn-outline-light">
-                    <i class="bi bi-cart-fill me-2"></i>
-                    Carrinho
-                    <span class="badge bg-light text-dark ms-1" id="cartItemCount">0</span>
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 style="color: #FFC72C;">
+                <a href="/loja" style="color: inherit; text-decoration: none;">Mc Donalds</a>
+            </h1>
+            <div>
+                <a href="/login" class="btn btn-outline-light me-2">
+                    <i class="bi bi-person-fill me-1"></i> Login
+                </a>
+                <a href="/loja/carrinho" class="btn btn-warning">
+                    <i class="bi bi-cart-fill me-1"></i> Carrinho
+                    <span class="badge bg-dark ms-1" id="cartItemCount">0</span>
                 </a>
             </div>
         </div>
     </div>
 </header>
 
-<!-- Navegação -->
-<div class="bg-light py-2">
-    <div class="container">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb m-0">
-                <li class="breadcrumb-item"><a href="/loja">Início</a></li>
-                <li class="breadcrumb-item active" aria-current="page" th:text="${produto.nome}">Produto</li>
-            </ol>
-        </nav>
-    </div>
-</div>
-
 <!-- Conteúdo principal -->
 <main class="container py-4">
     <div class="row">
-        <!-- Galeria de imagens -->
+        <!-- Carrossel de imagens -->
         <div class="col-md-6 mb-4">
-            <div class="product-gallery">
-                <!-- Imagem Principal -->
-                <div class="main-image border mb-3 p-3 bg-white rounded text-center">
-                    <img th:if="${produto.imagemPrincipalUrl != null}"
-                         th:src="${produto.imagemPrincipalUrl}"
-                         class="img-fluid"
-                         th:alt="${produto.nome}"
-                         id="main-product-image"
-                         style="max-height: 350px;">
-                    <img th:if="${produto.imagemPrincipalUrl == null}"
-                         src="/static/images/produto-sem-imagem.jpg"
-                         class="img-fluid"
-                         alt="Imagem não disponível"
-                         style="max-height: 350px;">
-                </div>
-
-                <!-- Thumbnails -->
-                <div class="row thumbnails" th:if="${produto.imagens != null && !produto.imagens.isEmpty()}">
-                    <div class="col-3 mb-2" th:each="imagem : ${produto.imagens}">
-                        <div th:class="'thumbnail border p-1 ' + ${imagem.principal ? 'border-primary' : ''} + ' rounded cursor-pointer'"
-                             onclick="changeMainImage(this)">
-                            <img th:src="${imagem.caminho}"
-                                 class="img-fluid"
-                                 th:alt="${produto.nome}"
-                                 th:data-image-url="${imagem.caminho}">
-                        </div>
+            <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    <!-- Se houver imagens, itera sobre elas -->
+                    <div th:if="${produto.imagens != null and !produto.imagens.isEmpty()}"
+                         th:each="imagem, iterStat : ${produto.imagens}"
+                         class="carousel-item"
+                         th:classappend="${iterStat.index == 0} ? ' active'">
+                        <img th:src="${imagem.caminho}" class="d-block w-100" th:alt="${produto.nome}">
+                    </div>
+                    <!-- Se não houver imagens, exibe a imagem principal ou uma padrão -->
+                    <div th:if="${produto.imagens == null or produto.imagens.isEmpty()}" class="carousel-item active">
+                        <img th:if="${produto.imagemPrincipalUrl != null}" th:src="${produto.imagemPrincipalUrl}" class="d-block w-100" th:alt="${produto.nome}">
+                        <img th:if="${produto.imagemPrincipalUrl == null}" src="/static/images/produto-sem-imagem.jpg" class="d-block w-100" alt="Imagem não disponível">
                     </div>
                 </div>
+                <!-- Controles do carrossel -->
+                <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Anterior</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Próximo</span>
+                </button>
             </div>
         </div>
 
@@ -127,13 +94,13 @@
             <p class="lead" th:text="${produto.descricao}">Descrição do produto</p>
 
             <div class="mb-3">
-                <span class="badge bg-secondary" th:text="'Código: ' + ${produto.codigo}">Código</span>
+                <!-- Produto código removido -->
                 <span class="badge bg-success" th:if="${produto.quantidadeEstoque > 0}">Em estoque</span>
                 <span class="badge bg-danger" th:if="${produto.quantidadeEstoque <= 0}">Fora de estoque</span>
             </div>
 
             <div class="mb-4">
-                <h2 class="text-primary fs-2">
+                <h2 class="fs-2" style="color: #000;">
                     <span th:text="'R$ ' + ${#numbers.formatDecimal(produto.preco, 1, 2, 'POINT')}">R$ 0,00</span>
                 </h2>
             </div>
@@ -153,7 +120,8 @@
                         </div>
                     </div>
                     <div class="col">
-                        <button class="btn btn-primary w-100"
+                        <button class="btn w-100"
+                                style="background-color: #DA291C; border-color: #DA291C; color: #fff;"
                                 th:attr="data-produto-id=${produto.id}"
                                 onclick="adicionarAoCarrinhoComQuantidade()"
                                 th:disabled="${produto.quantidadeEstoque <= 0}">
@@ -174,7 +142,6 @@
         <div class="row">
             <div class="col-md-6">
                 <h5>Mc Donalds</h5>
-
             </div>
             <div class="col-md-6 text-md-end">
                 <p>© 2025 Mc Donalds. Todos os direitos reservados.</p>
@@ -190,25 +157,11 @@
         atualizarContagemCarrinho();
     });
 
-    // Função para trocar a imagem principal
-    function changeMainImage(thumbnail) {
-        const mainImage = document.getElementById('main-product-image');
-        const imageUrl = thumbnail.querySelector('img').getAttribute('data-image-url');
-        mainImage.src = imageUrl;
-
-        // Atualizar borda das thumbnails
-        document.querySelectorAll('.thumbnail').forEach(el => {
-            el.classList.remove('border-primary');
-        });
-        thumbnail.classList.add('border-primary');
-    }
-
     // Funções para incrementar/decrementar quantidade
     function incrementQuantity() {
         const input = document.getElementById('quantidade');
         const maxValue = parseInt(input.getAttribute('max') || 999);
         let currentValue = parseInt(input.value || 1);
-
         if (currentValue < maxValue) {
             input.value = currentValue + 1;
         }
@@ -217,60 +170,43 @@
     function decrementQuantity() {
         const input = document.getElementById('quantidade');
         let currentValue = parseInt(input.value || 1);
-
         if (currentValue > 1) {
             input.value = currentValue - 1;
         }
     }
 
-    // Função para atualizar a contagem de itens no carrinho
+    // Atualiza a contagem de itens do carrinho
     function atualizarContagemCarrinho() {
         const carrinho = JSON.parse(localStorage.getItem('carrinho')) || { itens: [] };
         const totalItens = carrinho.itens.reduce((total, item) => total + item.quantidade, 0);
-
         document.getElementById('cartItemCount').textContent = totalItens;
     }
 
-    // Função para mostrar mensagem de sucesso
+    // Mostra mensagem de sucesso
     function mostrarMensagemSucesso() {
         const mensagem = document.getElementById('successMessage');
         mensagem.style.display = 'block';
-
-        // Esconder a mensagem após 3 segundos
         setTimeout(() => {
             mensagem.style.display = 'none';
         }, 3000);
     }
 
-    // Função para adicionar ao carrinho com quantidade específica
+    // Adiciona o produto ao carrinho com a quantidade especificada
     function adicionarAoCarrinhoComQuantidade() {
         const produtoId = document.querySelector('[data-produto-id]').getAttribute('data-produto-id');
         const quantidade = parseInt(document.getElementById('quantidade').value);
-
-        // Obter carrinho atual do localStorage
         let carrinho = JSON.parse(localStorage.getItem('carrinho')) || { itens: [] };
-
-        // Verificar se o produto já está no carrinho
         const itemExistente = carrinho.itens.find(item => item.produtoId === produtoId);
-
         if (itemExistente) {
-            // Atualizar quantidade
             itemExistente.quantidade += quantidade;
         } else {
-            // Adicionar novo item
             carrinho.itens.push({
                 produtoId: produtoId,
                 quantidade: quantidade
             });
         }
-
-        // Salvar carrinho atualizado
         localStorage.setItem('carrinho', JSON.stringify(carrinho));
-
-        // Atualizar contagem de itens
         atualizarContagemCarrinho();
-
-        // Feedback visual
         mostrarMensagemSucesso();
     }
 </script>
