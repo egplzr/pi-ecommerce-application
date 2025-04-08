@@ -117,6 +117,7 @@
         <div class="mb-3">
             <label for="cepEntrega" class="form-label">CEP de Entrega</label>
             <input type="text" class="form-control" id="cepEntrega" placeholder="Digite o CEP" required>
+            <div class="form-text">O CEP será validado automaticamente.</div>
         </div>
         <div class="mb-3">
             <label for="logradouroEntrega" class="form-label">Logradouro de Entrega</label>
@@ -161,7 +162,7 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Função para validar o CEP e preencher os campos automaticamente
+    // Função para validar o CEP e preencher os campos automaticamente (Endereço de Faturamento)
     document.getElementById('cep').addEventListener('blur', function () {
         let cep = this.value.replace(/\D/g, ''); // Remove tudo que não é número
         if (cep.length === 8) {
@@ -175,6 +176,34 @@
                         document.getElementById('bairro').value = data.bairro;
                         document.getElementById('cidade').value = data.localidade;
                         document.getElementById('uf').value = data.uf;
+                        // Preenche automaticamente o Endereço de Entrega
+                        if (document.getElementById('copiarEndereco').checked) {
+                            document.getElementById('cepEntrega').value = data.cep;
+                            document.getElementById('logradouroEntrega').value = data.logradouro;
+                            document.getElementById('bairroEntrega').value = data.bairro;
+                            document.getElementById('cidadeEntrega').value = data.localidade;
+                            document.getElementById('ufEntrega').value = data.uf;
+                        }
+                    }
+                })
+                .catch(error => alert("Erro ao buscar o CEP."));
+        }
+    });
+
+    // Função para validar o CEP de entrega e preencher os campos automaticamente
+    document.getElementById('cepEntrega').addEventListener('blur', function () {
+        let cep = this.value.replace(/\D/g, ''); // Remove tudo que não é número
+        if (cep.length === 8) {
+            fetch(`https://viacep.com.br/ws/${cep}/json/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.erro) {
+                        alert("CEP não encontrado.");
+                    } else {
+                        document.getElementById('logradouroEntrega').value = data.logradouro;
+                        document.getElementById('bairroEntrega').value = data.bairro;
+                        document.getElementById('cidadeEntrega').value = data.localidade;
+                        document.getElementById('ufEntrega').value = data.uf;
                     }
                 })
                 .catch(error => alert("Erro ao buscar o CEP."));
