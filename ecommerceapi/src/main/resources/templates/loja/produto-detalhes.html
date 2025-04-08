@@ -124,9 +124,12 @@
                         </div>
                     </div>
                     <div class="col">
-                        <button class="btn w-100"
+                        <button id="btnAdicionar" class="btn w-100"
                                 style="background-color: #DA291C; border-color: #DA291C; color: #fff;"
-                                th:attr="data-produto-id=${produto.id}"
+                                th:attr="data-produto-id=${produto.id},
+                 data-produto-nome=${produto.nome},
+                 data-produto-preco=${produto.preco},
+                 data-produto-imagem=${produto.imagemPrincipalUrl}"
                                 onclick="adicionarAoCarrinhoComQuantidade()"
                                 th:disabled="${produto.quantidadeEstoque <= 0}">
                             <i class="bi bi-cart-plus me-2"></i>
@@ -195,17 +198,25 @@
         }, 3000);
     }
 
-    // Adiciona o produto ao carrinho com a quantidade especificada usando a chave "cart"
+    // Adiciona o produto ao carrinho com a quantidade especificada, incluindo dados completos do produto
     function adicionarAoCarrinhoComQuantidade() {
-        const produtoId = document.querySelector('[data-produto-id]').getAttribute('data-produto-id');
+        // Obter os dados do botão a partir dos atributos data-*
+        const btn = document.getElementById('btnAdicionar');
+        const produto = {
+            produtoId: btn.getAttribute('data-produto-id'),
+            nome: btn.getAttribute('data-produto-nome'),
+            preco: parseFloat(btn.getAttribute('data-produto-preco')),
+            imagemUrl: btn.getAttribute('data-produto-imagem')
+        };
         const quantidade = parseInt(document.getElementById('quantidade').value);
+
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
-        const itemExistente = cart.find(item => item.produtoId === produtoId);
+        const itemExistente = cart.find(item => item.produtoId === produto.produtoId);
         if (itemExistente) {
             itemExistente.quantidade += quantidade;
         } else {
             cart.push({
-                produtoId: produtoId,
+                ...produto,
                 quantidade: quantidade
             });
         }
@@ -214,5 +225,6 @@
         mostrarMensagemSucesso();
     }
 </script>
+
 </body>
 </html>

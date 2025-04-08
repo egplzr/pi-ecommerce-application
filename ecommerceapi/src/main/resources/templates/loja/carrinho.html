@@ -15,7 +15,6 @@
         <div class="d-flex justify-content-between align-items-center">
             <h1 style="color: #FFC72C;">
                 <a href="/loja" style="color: inherit; text-decoration: none;">
-                    <!-- Logo do McDonald's -->
                     <img src="/static/images/m-mcdonalds-removebg-preview.png" alt="Logo Mc Donalds" style="width:40px; height:auto; vertical-align: middle;" class="me-2">
                     Mc Donalds
                 </a>
@@ -59,6 +58,11 @@
     // Variável global para armazenar o subtotal dos produtos
     let currentSubtotal = 0;
 
+    // Função auxiliar para obter o identificador do produto
+    function getProdutoId(item) {
+      return item.produtoId || item.id;
+    }
+
     // Função para renderizar o carrinho usando a chave "cart" do localStorage
     function renderCart() {
       const cartContainer = document.getElementById('cartContainer');
@@ -78,33 +82,40 @@
       let tableRows = '';
       let subtotal = 0;
       cart.forEach(item => {
-        const itemSubtotal = item.preco * item.quantidade;
+        // Obtém o identificador, nome, preço e imagem com valores padrões se ausentes
+        const pid = getProdutoId(item);
+        const nome = item.nome || "Produto Sem Nome";
+        const preco = parseFloat(item.preco) || 0;
+        const quantidade = parseInt(item.quantidade) || 0;
+        const imagemUrl = item.imagemUrl || '/static/images/produto-sem-imagem.jpg';
+
+        const itemSubtotal = preco * quantidade;
         subtotal += itemSubtotal;
         tableRows += `
           <tr>
             <td>
               <div class="d-flex align-items-center">
-                <img src="${item.imagemUrl}" alt="${item.nome}" style="width: 50px; height: 50px; object-fit: contain;" class="me-3">
+                <img src="${imagemUrl}" alt="${nome}" style="width: 50px; height: 50px; object-fit: contain;" class="me-3">
                 <div>
-                  <h6 class="mb-0">${item.nome}</h6>
+                  <h6 class="mb-0">${nome}</h6>
                 </div>
               </div>
             </td>
-            <td>R$ ${item.preco.toFixed(2)}</td>
+            <td>R$ ${preco.toFixed(2)}</td>
             <td>
               <div class="input-group input-group-sm" style="width: 120px;">
-                <button class="btn btn-outline-secondary" onclick="updateQuantity(${item.id}, ${item.quantidade - 1})">
+                <button class="btn btn-outline-secondary" onclick="updateQuantity('${pid}', ${quantidade - 1})">
                   <i class="bi bi-dash"></i>
                 </button>
-                <input type="number" class="form-control text-center" value="${item.quantidade}" min="1" onchange="updateQuantity(${item.id}, this.value)">
-                <button class="btn btn-outline-secondary" onclick="updateQuantity(${item.id}, ${item.quantidade + 1})">
+                <input type="number" class="form-control text-center" value="${quantidade}" min="1" onchange="updateQuantity('${pid}', this.value)">
+                <button class="btn btn-outline-secondary" onclick="updateQuantity('${pid}', ${quantidade + 1})">
                   <i class="bi bi-plus"></i>
                 </button>
               </div>
             </td>
             <td>R$ ${itemSubtotal.toFixed(2)}</td>
             <td>
-              <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${item.id})">
+              <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart('${pid}')">
                 <i class="bi bi-trash"></i>
               </button>
             </td>
@@ -202,17 +213,18 @@
     function updateCartCount() {
       const cart = JSON.parse(localStorage.getItem('cart')) || [];
       let count = 0;
-      cart.forEach(item => count += item.quantidade);
+      cart.forEach(item => count += parseInt(item.quantidade));
       document.getElementById('cartItemCount').textContent = count;
     }
 
-    // Atualiza a quantidade de um item no carrinho
+    // Atualiza a quantidade de um item no carrinho usando produtoId
     function updateQuantity(produtoId, newQuantity) {
       newQuantity = parseInt(newQuantity);
       if (newQuantity < 1) newQuantity = 1;
       let cart = JSON.parse(localStorage.getItem('cart')) || [];
+      // Atualiza os itens usando produtoId
       cart = cart.map(item => {
-        if (item.id == produtoId) {
+        if ((item.produtoId || item.id) === produtoId) {
           item.quantidade = newQuantity;
         }
         return item;
@@ -221,10 +233,10 @@
       renderCart();
     }
 
-    // Remove um item do carrinho
+    // Remove um item do carrinho usando produtoId
     function removeFromCart(produtoId) {
       let cart = JSON.parse(localStorage.getItem('cart')) || [];
-      cart = cart.filter(item => item.id != produtoId);
+      cart = cart.filter(item => (item.produtoId || item.id) !== produtoId);
       localStorage.setItem('cart', JSON.stringify(cart));
       renderCart();
     }
@@ -237,10 +249,9 @@
       }
     }
 
-    // Função para atualizar o valor do frete e do total com base na opção selecionada
+    // Atualiza o valor do frete e o total com base na opção selecionada
     function updateShipping() {
       let shippingCost = parseFloat(document.getElementById('shippingOption').value);
-      // Se nenhum valor válido for escolhido, consideramos 0
       if (isNaN(shippingCost)) {
         shippingCost = 0;
       }

@@ -80,7 +80,10 @@
               <!-- Botão Adicionar ao Carrinho -->
               <button class="btn add-to-cart"
                       style="background-color: #DA291C; border-color: #DA291C; color: #fff;"
-                      th:attr="data-produto-id=${produto.id}">
+                      th:attr="data-produto-id=${produto.id},
+                 data-produto-nome=${produto.nome},
+                 data-produto-preco=${produto.preco},
+                 data-produto-imagem=${produto.imagemPrincipalUrl}">
                 <i class="bi bi-cart-plus me-1"></i> Adicionar ao Carrinho
               </button>
             </div>
@@ -142,46 +145,57 @@
       document.getElementById('cartItemCount').innerText = count;
   }
 
-  // Função para adicionar produto ao carrinho usando a chave "cart"
-  function adicionarAoCarrinho(produtoId, quantidade) {
-      // Obter o carrinho atual do localStorage
+  // Função para adicionar o produto completo ao carrinho (com dados: id, nome, preço, imagem e quantidade)
+  function adicionarAoCarrinho(produto) {
       let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
-      // Verificar se o produto já está no carrinho
-      const itemExistente = cart.find(item => item.produtoId === produtoId);
+      // Verificar se o produto já existe no carrinho pelo produtoId
+      const itemExistente = cart.find(item => item.produtoId === produto.produtoId);
 
       if (itemExistente) {
-          // Atualizar quantidade
-          itemExistente.quantidade += parseInt(quantidade);
+          // Atualiza a quantidade do item existente
+          itemExistente.quantidade += parseInt(produto.quantidade);
       } else {
-          // Adicionar novo item
+          // Adiciona o novo item com todos os dados
           cart.push({
-              produtoId: produtoId,
-              quantidade: parseInt(quantidade)
+              produtoId: produto.produtoId,
+              nome: produto.nome,
+              preco: parseFloat(produto.preco),
+              imagemUrl: produto.imagemUrl,
+              quantidade: parseInt(produto.quantidade)
           });
       }
 
-      // Salvar o carrinho atualizado usando a chave "cart"
+      // Salvar o carrinho atualizado
       localStorage.setItem('cart', JSON.stringify(cart));
 
       // Atualizar o contador de itens no header
       updateCartCount();
 
-      // Feedback visual
+      // Feedback visual ao usuário
       alert('Produto adicionado ao carrinho!');
   }
 
-  // Inicializar ao carregar a página
+  // Inicializa ao carregar a página
   document.addEventListener('DOMContentLoaded', function() {
       updateCartCount();
-      // Adicionar evento aos botões de adicionar ao carrinho
+
+      // Adicionar evento aos botões de "Adicionar ao Carrinho"
       const addToCartButtons = document.querySelectorAll('.add-to-cart, [class*="adicionar-ao-carrinho"]');
       addToCartButtons.forEach(button => {
           button.addEventListener('click', function(event) {
-              const produtoId = this.getAttribute('data-produto-id');
-              adicionarAoCarrinho(produtoId, 1);
+              // Obtenha os dados do produto a partir dos atributos data-* do botão
+              const produto = {
+                  produtoId: this.getAttribute('data-produto-id'),
+                  nome: this.getAttribute('data-produto-nome'),
+                  preco: this.getAttribute('data-produto-preco'),
+                  imagemUrl: this.getAttribute('data-produto-imagem'),
+                  quantidade: 1  // inicialmente 1 item
+              };
 
-              // Efeito visual
+              adicionarAoCarrinho(produto);
+
+              // Efeito visual (exemplo de animação) se necessário
               this.classList.add('cart-animation');
               setTimeout(() => {
                   this.classList.remove('cart-animation');
@@ -190,5 +204,6 @@
       });
   });
 </script>
+
 </body>
 </html>
