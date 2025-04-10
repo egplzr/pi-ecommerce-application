@@ -13,7 +13,7 @@
         }
 
         .form-container {
-            max-width: 600px;
+            max-width: 700px;
             margin: 30px auto;
             padding: 40px;
             background-color: white;
@@ -29,6 +29,27 @@
         .btn-custom:hover {
             background-color: #c4000d;
         }
+
+        .alert {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .address-entry {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .remove-address {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            color: #dc3545;
+        }
     </style>
 </head>
 
@@ -36,6 +57,14 @@
 <div class="form-container">
     <!-- Título do Formulário -->
     <h2 class="text-center mb-4">Cadastro de Cliente</h2>
+
+    <!-- Alerta para mensagens -->
+    <div class="alert alert-success" id="successAlert" role="alert">
+        Cadastro realizado com sucesso!
+    </div>
+    <div class="alert alert-danger" id="errorAlert" role="alert">
+        Erro ao realizar cadastro.
+    </div>
 
     <!-- Formulário de Cadastro -->
     <form id="cadastroForm">
@@ -71,9 +100,9 @@
             <label for="genero" class="form-label">Gênero</label>
             <select class="form-control" id="genero" required>
                 <option value="">Selecione</option>
-                <option value="masculino">Masculino</option>
-                <option value="feminino">Feminino</option>
-                <option value="outro">Outro</option>
+                <option value="MASCULINO">Masculino</option>
+                <option value="FEMININO">Feminino</option>
+                <option value="OUTRO">Outro</option>
             </select>
         </div>
 
@@ -109,39 +138,48 @@
             <input type="text" class="form-control" id="uf" placeholder="Digite a UF" required>
         </div>
 
-        <!-- Endereço de Entrega -->
-        <h5>Endereço de Entrega</h5>
-        <div class="mb-3">
-            <input type="checkbox" id="copiarEndereco" onclick="copiarEndereco()"> Usar o mesmo endereço de faturamento
+        <!-- Endereços de Entrega -->
+        <div class="d-flex justify-content-between align-items-center">
+            <h5>Endereços de Entrega</h5>
+            <button type="button" class="btn btn-sm btn-primary" id="addEnderecoBtn">Adicionar Endereço</button>
         </div>
-        <div class="mb-3">
-            <label for="cepEntrega" class="form-label">CEP de Entrega</label>
-            <input type="text" class="form-control" id="cepEntrega" placeholder="Digite o CEP" required>
-            <div class="form-text">O CEP será validado automaticamente.</div>
-        </div>
-        <div class="mb-3">
-            <label for="logradouroEntrega" class="form-label">Logradouro de Entrega</label>
-            <input type="text" class="form-control" id="logradouroEntrega" placeholder="Digite o logradouro" required>
-        </div>
-        <div class="mb-3">
-            <label for="numeroEntrega" class="form-label">Número de Entrega</label>
-            <input type="text" class="form-control" id="numeroEntrega" placeholder="Digite o número" required>
-        </div>
-        <div class="mb-3">
-            <label for="complementoEntrega" class="form-label">Complemento de Entrega</label>
-            <input type="text" class="form-control" id="complementoEntrega" placeholder="Digite o complemento">
-        </div>
-        <div class="mb-3">
-            <label for="bairroEntrega" class="form-label">Bairro de Entrega</label>
-            <input type="text" class="form-control" id="bairroEntrega" placeholder="Digite o bairro" required>
-        </div>
-        <div class="mb-3">
-            <label for="cidadeEntrega" class="form-label">Cidade de Entrega</label>
-            <input type="text" class="form-control" id="cidadeEntrega" placeholder="Digite a cidade" required>
-        </div>
-        <div class="mb-3">
-            <label for="ufEntrega" class="form-label">UF de Entrega</label>
-            <input type="text" class="form-control" id="ufEntrega" placeholder="Digite a UF" required>
+
+        <div id="enderecosEntregaContainer">
+            <div class="address-entry" id="enderecoEntrega-0">
+                <span class="remove-address" onclick="removeEndereco(0)" style="display: none;">&times;</span>
+
+                <div class="mb-3">
+                    <input type="checkbox" id="copiarEndereco-0" onclick="copiarEndereco(0)"> Usar o mesmo endereço de faturamento
+                </div>
+                <div class="mb-3">
+                    <label for="cepEntrega-0" class="form-label">CEP</label>
+                    <input type="text" class="form-control" id="cepEntrega-0" placeholder="Digite o CEP" required>
+                </div>
+                <div class="mb-3">
+                    <label for="logradouroEntrega-0" class="form-label">Logradouro</label>
+                    <input type="text" class="form-control" id="logradouroEntrega-0" placeholder="Digite o logradouro" required>
+                </div>
+                <div class="mb-3">
+                    <label for="numeroEntrega-0" class="form-label">Número</label>
+                    <input type="text" class="form-control" id="numeroEntrega-0" placeholder="Digite o número" required>
+                </div>
+                <div class="mb-3">
+                    <label for="complementoEntrega-0" class="form-label">Complemento</label>
+                    <input type="text" class="form-control" id="complementoEntrega-0" placeholder="Digite o complemento">
+                </div>
+                <div class="mb-3">
+                    <label for="bairroEntrega-0" class="form-label">Bairro</label>
+                    <input type="text" class="form-control" id="bairroEntrega-0" placeholder="Digite o bairro" required>
+                </div>
+                <div class="mb-3">
+                    <label for="cidadeEntrega-0" class="form-label">Cidade</label>
+                    <input type="text" class="form-control" id="cidadeEntrega-0" placeholder="Digite a cidade" required>
+                </div>
+                <div class="mb-3">
+                    <label for="ufEntrega-0" class="form-label">UF</label>
+                    <input type="text" class="form-control" id="ufEntrega-0" placeholder="Digite a UF" required>
+                </div>
+            </div>
         </div>
 
         <!-- Senha -->
@@ -162,9 +200,82 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Função para validar o CEP e preencher os campos automaticamente (Endereço de Faturamento)
-    document.getElementById('cep').addEventListener('blur', function () {
-        let cep = this.value.replace(/\D/g, ''); // Remove tudo que não é número
+    // Contador para IDs dos endereços de entrega
+    let enderecoCounter = 0;
+
+    // Adicionar novo endereço de entrega
+    document.getElementById('addEnderecoBtn').addEventListener('click', function() {
+        enderecoCounter++;
+
+        // Mostrar o botão de remover no primeiro endereço
+        if (enderecoCounter === 1) {
+            document.querySelector('.remove-address').style.display = 'block';
+        }
+
+        const container = document.getElementById('enderecosEntregaContainer');
+        const newAddress = document.createElement('div');
+        newAddress.className = 'address-entry';
+        newAddress.id = `enderecoEntrega-${enderecoCounter}`;
+
+        newAddress.innerHTML = `
+            <span class="remove-address" onclick="removeEndereco(${enderecoCounter})">&times;</span>
+
+            <div class="mb-3">
+                <input type="checkbox" id="copiarEndereco-${enderecoCounter}" onclick="copiarEndereco(${enderecoCounter})"> Usar o mesmo endereço de faturamento
+            </div>
+            <div class="mb-3">
+                <label for="cepEntrega-${enderecoCounter}" class="form-label">CEP</label>
+                <input type="text" class="form-control" id="cepEntrega-${enderecoCounter}" placeholder="Digite o CEP" required>
+            </div>
+            <div class="mb-3">
+                <label for="logradouroEntrega-${enderecoCounter}" class="form-label">Logradouro</label>
+                <input type="text" class="form-control" id="logradouroEntrega-${enderecoCounter}" placeholder="Digite o logradouro" required>
+            </div>
+            <div class="mb-3">
+                <label for="numeroEntrega-${enderecoCounter}" class="form-label">Número</label>
+                <input type="text" class="form-control" id="numeroEntrega-${enderecoCounter}" placeholder="Digite o número" required>
+            </div>
+            <div class="mb-3">
+                <label for="complementoEntrega-${enderecoCounter}" class="form-label">Complemento</label>
+                <input type="text" class="form-control" id="complementoEntrega-${enderecoCounter}" placeholder="Digite o complemento">
+            </div>
+            <div class="mb-3">
+                <label for="bairroEntrega-${enderecoCounter}" class="form-label">Bairro</label>
+                <input type="text" class="form-control" id="bairroEntrega-${enderecoCounter}" placeholder="Digite o bairro" required>
+            </div>
+            <div class="mb-3">
+                <label for="cidadeEntrega-${enderecoCounter}" class="form-label">Cidade</label>
+                <input type="text" class="form-control" id="cidadeEntrega-${enderecoCounter}" placeholder="Digite a cidade" required>
+            </div>
+            <div class="mb-3">
+                <label for="ufEntrega-${enderecoCounter}" class="form-label">UF</label>
+                <input type="text" class="form-control" id="ufEntrega-${enderecoCounter}" placeholder="Digite a UF" required>
+            </div>
+        `;
+
+        container.appendChild(newAddress);
+
+        // Adicionar evento de validação de CEP para o novo endereço
+        document.getElementById(`cepEntrega-${enderecoCounter}`).addEventListener('blur', function() {
+            validateCep(this.value, enderecoCounter);
+        });
+    });
+
+    // Remover endereço de entrega
+    function removeEndereco(index) {
+        const endereco = document.getElementById(`enderecoEntrega-${index}`);
+        endereco.remove();
+
+        // Se só restar um endereço, esconder o botão de remover
+        const remainingAddresses = document.querySelectorAll('.address-entry').length;
+        if (remainingAddresses === 1) {
+            document.querySelector('.remove-address').style.display = 'none';
+        }
+    }
+
+    // Validar CEP para qualquer endereço
+    function validateCep(cep, index = null) {
+        cep = cep.replace(/\D/g, ''); // Remove tudo que não é número
         if (cep.length === 8) {
             fetch(`https://viacep.com.br/ws/${cep}/json/`)
                 .then(response => response.json())
@@ -172,64 +283,184 @@
                     if (data.erro) {
                         alert("CEP não encontrado.");
                     } else {
-                        document.getElementById('logradouro').value = data.logradouro;
-                        document.getElementById('bairro').value = data.bairro;
-                        document.getElementById('cidade').value = data.localidade;
-                        document.getElementById('uf').value = data.uf;
-                        // Preenche automaticamente o Endereço de Entrega
-                        if (document.getElementById('copiarEndereco').checked) {
-                            document.getElementById('cepEntrega').value = data.cep;
-                            document.getElementById('logradouroEntrega').value = data.logradouro;
-                            document.getElementById('bairroEntrega').value = data.bairro;
-                            document.getElementById('cidadeEntrega').value = data.localidade;
-                            document.getElementById('ufEntrega').value = data.uf;
+                        if (index === null) {
+                            // Endereço de faturamento
+                            document.getElementById('logradouro').value = data.logradouro;
+                            document.getElementById('bairro').value = data.bairro;
+                            document.getElementById('cidade').value = data.localidade;
+                            document.getElementById('uf').value = data.uf;
+                        } else {
+                            // Endereço de entrega
+                            document.getElementById(`logradouroEntrega-${index}`).value = data.logradouro;
+                            document.getElementById(`bairroEntrega-${index}`).value = data.bairro;
+                            document.getElementById(`cidadeEntrega-${index}`).value = data.localidade;
+                            document.getElementById(`ufEntrega-${index}`).value = data.uf;
                         }
                     }
                 })
                 .catch(error => alert("Erro ao buscar o CEP."));
         }
+    }
+
+    // Validar CEP do endereço de faturamento
+    document.getElementById('cep').addEventListener('blur', function() {
+        validateCep(this.value);
     });
 
-    // Função para validar o CEP de entrega e preencher os campos automaticamente
-    document.getElementById('cepEntrega').addEventListener('blur', function () {
-        let cep = this.value.replace(/\D/g, ''); // Remove tudo que não é número
-        if (cep.length === 8) {
-            fetch(`https://viacep.com.br/ws/${cep}/json/`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.erro) {
-                        alert("CEP não encontrado.");
-                    } else {
-                        document.getElementById('logradouroEntrega').value = data.logradouro;
-                        document.getElementById('bairroEntrega').value = data.bairro;
-                        document.getElementById('cidadeEntrega').value = data.localidade;
-                        document.getElementById('ufEntrega').value = data.uf;
-                    }
-                })
-                .catch(error => alert("Erro ao buscar o CEP."));
-        }
+    // Validar CEP do primeiro endereço de entrega
+    document.getElementById('cepEntrega-0').addEventListener('blur', function() {
+        validateCep(this.value, 0);
     });
 
     // Função para copiar o endereço de faturamento para o de entrega
-    function copiarEndereco() {
-        if (document.getElementById('copiarEndereco').checked) {
-            document.getElementById('cepEntrega').value = document.getElementById('cep').value;
-            document.getElementById('logradouroEntrega').value = document.getElementById('logradouro').value;
-            document.getElementById('numeroEntrega').value = document.getElementById('numero').value;
-            document.getElementById('complementoEntrega').value = document.getElementById('complemento').value;
-            document.getElementById('bairroEntrega').value = document.getElementById('bairro').value;
-            document.getElementById('cidadeEntrega').value = document.getElementById('cidade').value;
-            document.getElementById('ufEntrega').value = document.getElementById('uf').value;
+    function copiarEndereco(index) {
+        if (document.getElementById(`copiarEndereco-${index}`).checked) {
+            document.getElementById(`cepEntrega-${index}`).value = document.getElementById('cep').value;
+            document.getElementById(`logradouroEntrega-${index}`).value = document.getElementById('logradouro').value;
+            document.getElementById(`numeroEntrega-${index}`).value = document.getElementById('numero').value;
+            document.getElementById(`complementoEntrega-${index}`).value = document.getElementById('complemento').value;
+            document.getElementById(`bairroEntrega-${index}`).value = document.getElementById('bairro').value;
+            document.getElementById(`cidadeEntrega-${index}`).value = document.getElementById('cidade').value;
+            document.getElementById(`ufEntrega-${index}`).value = document.getElementById('uf').value;
         } else {
-            document.getElementById('cepEntrega').value = '';
-            document.getElementById('logradouroEntrega').value = '';
-            document.getElementById('numeroEntrega').value = '';
-            document.getElementById('complementoEntrega').value = '';
-            document.getElementById('bairroEntrega').value = '';
-            document.getElementById('cidadeEntrega').value = '';
-            document.getElementById('ufEntrega').value = '';
+            document.getElementById(`cepEntrega-${index}`).value = '';
+            document.getElementById(`logradouroEntrega-${index}`).value = '';
+            document.getElementById(`numeroEntrega-${index}`).value = '';
+            document.getElementById(`complementoEntrega-${index}`).value = '';
+            document.getElementById(`bairroEntrega-${index}`).value = '';
+            document.getElementById(`cidadeEntrega-${index}`).value = '';
+            document.getElementById(`ufEntrega-${index}`).value = '';
         }
     }
+
+    // Formatar o CPF (adicionar pontos e traço)
+    document.getElementById('cpf').addEventListener('input', function() {
+        let cpf = this.value.replace(/\D/g, ''); // Remove tudo que não é número
+        if (cpf.length > 11) {
+            cpf = cpf.substring(0, 11);
+        }
+        if (cpf.length > 9) {
+            this.value = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+        } else if (cpf.length > 6) {
+            this.value = cpf.replace(/(\d{3})(\d{3})(\d{3})/, '$1.$2.$3');
+        } else if (cpf.length > 3) {
+            this.value = cpf.replace(/(\d{3})(\d{3})/, '$1.$2');
+        } else {
+            this.value = cpf;
+        }
+    });
+
+    // Validar o formulário e enviar os dados
+    document.getElementById('cadastroForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        // Validar senha e confirmação
+        const senha = document.getElementById('senha').value;
+        const confirmarSenha = document.getElementById('confirmarSenha').value;
+
+        if (senha !== confirmarSenha) {
+            alert('As senhas não coincidem!');
+            return;
+        }
+
+        // Validar nome (pelo menos 2 palavras com no mínimo 3 letras cada)
+        const nome = document.getElementById('nome').value.trim();
+        const nomeParts = nome.split(' ').filter(part => part.length >= 3);
+
+        if (nomeParts.length < 2) {
+            alert('O nome deve conter pelo menos 2 palavras, cada uma com pelo menos 3 letras.');
+            return;
+        }
+
+        // Formatar endereço de faturamento como string
+        const enderecoFaturamento = [
+            document.getElementById('logradouro').value,
+            document.getElementById('numero').value,
+            document.getElementById('complemento').value,
+            document.getElementById('bairro').value,
+            document.getElementById('cidade').value,
+            document.getElementById('uf').value,
+            document.getElementById('cep').value
+        ].filter(Boolean).join(', ');
+
+        // Coletar todos os endereços de entrega
+        const enderecosEntrega = [];
+        const enderecoElements = document.querySelectorAll('.address-entry');
+
+        enderecoElements.forEach((element, i) => {
+            const id = element.id.split('-')[1];
+            const enderecoEntrega = [
+                document.getElementById(`logradouroEntrega-${id}`).value,
+                document.getElementById(`numeroEntrega-${id}`).value,
+                document.getElementById(`complementoEntrega-${id}`).value,
+                document.getElementById(`bairroEntrega-${id}`).value,
+                document.getElementById(`cidadeEntrega-${id}`).value,
+                document.getElementById(`ufEntrega-${id}`).value,
+                document.getElementById(`cepEntrega-${id}`).value
+            ].filter(Boolean).join(', ');
+
+            enderecosEntrega.push(enderecoEntrega);
+        });
+
+        // Criar objeto de cliente compatível com o DTO no backend
+        const clienteData = {
+            nome: nome,
+            email: document.getElementById('email').value,
+            cpf: document.getElementById('cpf').value.replace(/\D/g, ''), // Remove tudo que não é número
+            senha: senha,
+            enderecoFaturamento: enderecoFaturamento,
+            enderecosEntrega: enderecosEntrega,
+            dataNascimento: document.getElementById('dataNascimento').value,
+            genero: document.getElementById('genero').value
+        };
+
+        // Mostrar indicador de carregamento
+        const submitButton = this.querySelector('button[type="submit"]');
+        const originalText = submitButton.innerHTML;
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processando...';
+
+        // Enviar dados para a API
+        fetch('/api/clientes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(clienteData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errorData => {
+                    throw new Error(errorData.message || 'Erro ao cadastrar cliente');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Mostrar mensagem de sucesso
+            document.getElementById('successAlert').style.display = 'block';
+            document.getElementById('errorAlert').style.display = 'none';
+
+            // Limpar formulário
+            document.getElementById('cadastroForm').reset();
+
+            // Redirecionar após 2 segundos
+            setTimeout(() => {
+                window.location.href = '/loja/login';
+            }, 2000);
+        })
+        .catch(error => {
+            // Mostrar mensagem de erro
+            document.getElementById('errorAlert').textContent = 'Erro ao cadastrar: ' + error.message;
+            document.getElementById('errorAlert').style.display = 'block';
+            document.getElementById('successAlert').style.display = 'none';
+        })
+        .finally(() => {
+            // Restaurar botão
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalText;
+        });
+    });
 </script>
 </body>
 
