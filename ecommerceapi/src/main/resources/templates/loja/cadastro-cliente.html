@@ -413,6 +413,7 @@
             dataNascimento: document.getElementById('dataNascimento').value,
             genero: document.getElementById('genero').value
         };
+        console.log("Dados do cliente:", JSON.stringify(clienteData, null, 2));
 
         // Mostrar indicador de carregamento
         const submitButton = this.querySelector('button[type="submit"]');
