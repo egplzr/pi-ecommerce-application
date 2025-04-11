@@ -22,14 +22,36 @@
             <!-- Formulário de Busca -->
 
             <!-- Ícones de Usuário e Carrinho -->
-            <div class="text-end">
-                <a href="/login-cliente.html" class="btn btn-outline-light me-2">
-                    <i class="bi bi-person-fill me-1"></i> Login
-                </a>
-                <a href="/loja/carrinho" class="btn btn-warning">
-                    <i class="bi bi-cart-fill me-1"></i> Carrinho
-                    <span class="badge bg-dark ms-1" id="cartItemCount">0</span>
-                </a>
+            <div class="text-end" id="headerUserArea">
+                <!-- Área padrão (não logado) -->
+                <div id="notLoggedIn">
+                    <a href="/loja/login-cliente" class="btn btn-outline-light me-2">
+                        <i class="bi bi-person-fill me-1"></i> Login
+                    </a>
+                    <a href="/loja/carrinho" class="btn btn-warning">
+                        <i class="bi bi-cart-fill me-1"></i> Carrinho
+                        <span class="badge bg-dark ms-1" id="cartItemCount">0</span>
+                    </a>
+                </div>
+
+                <!-- Área logada (será exibida via JavaScript) -->
+                <div id="loggedIn" style="display:none">
+                    <div class="dropdown d-inline-block me-2">
+                        <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-fill me-1"></i> <span id="clienteNome">Cliente</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="/loja/minha-conta">Minha Conta</a></li>
+                            <li><a class="dropdown-item" href="/loja/pedidos">Meus Pedidos</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" id="btnLogout">Sair</a></li>
+                        </ul>
+                    </div>
+                    <a href="/loja/carrinho" class="btn btn-warning">
+                        <i class="bi bi-cart-fill me-1"></i> Carrinho
+                        <span class="badge bg-dark ms-1" id="cartItemCount2">0</span>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -96,6 +118,60 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/static/js/csrf-token.js"></script>
 <script src="/static/js/loja.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Verificar estado de login
+        verificarLogin();
+
+        // Adicionar evento de logout
+        document.getElementById('btnLogout').addEventListener('click', function(e) {
+            e.preventDefault();
+            realizarLogout();
+        });
+    });
+
+    function verificarLogin() {
+        fetch('/api/cliente-auth/check')
+            .then(response => response.json())
+            .then(data => {
+                if (data.logado) {
+                    // Cliente está logado
+                    document.getElementById('clienteNome').textContent = data.cliente.nome;
+                    document.getElementById('notLoggedIn').style.display = 'none';
+                    document.getElementById('loggedIn').style.display = 'block';
+
+                    // Atualizar contagem no carrinho no elemento correto
+                    const count = document.getElementById('cartItemCount').textContent;
+                    document.getElementById('cartItemCount2').textContent = count;
+                } else {
+                    // Cliente não está logado
+                    document.getElementById('notLoggedIn').style.display = 'block';
+                    document.getElementById('loggedIn').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao verificar login:', error);
+            });
+    }
+
+    function realizarLogout() {
+        fetch('/api/cliente-auth/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Redirecionar para a página inicial após logout
+            window.location.href = '/loja?logout=true';
+        })
+        .catch(error => {
+            console.error('Erro ao realizar logout:', error);
+        });
+    }
+</script>
 
 <!-- Bloco para scripts adicionais -->
 <th:block th:replace="${scripts}"></th:block>
