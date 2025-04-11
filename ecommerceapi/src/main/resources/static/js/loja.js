@@ -111,6 +111,19 @@ function atualizarContagemCarrinho() {
         });
 }
 
+// Função para verificar se o usuário está autenticado
+function verificarAutenticacao() {
+    return fetch('/api/cliente-auth/check')
+        .then(response => response.json())
+        .then(data => {
+            return data.logado;
+        })
+        .catch(error => {
+            console.error('Erro ao verificar autenticação:', error);
+            return false;
+        });
+}
+
 // Chamar no carregamento da página
 document.addEventListener('DOMContentLoaded', function() {
     atualizarContagemCarrinho();

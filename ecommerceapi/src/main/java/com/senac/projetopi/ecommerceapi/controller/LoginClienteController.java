@@ -1,6 +1,7 @@
 package com.senac.projetopi.ecommerceapi.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,19 +17,25 @@ public class LoginClienteController {
             Model model,
             HttpServletRequest request) {
 
-        // Verifica se já existe uma sessão de cliente
-        if (request.getSession(false) != null && request.getSession().getAttribute("clienteId") != null) {
+        // Obter sessão sem criar uma nova
+        HttpSession session = request.getSession(false);
+
+        // Verificar se já existe uma sessão de cliente válida
+        if (session != null && session.getAttribute("clienteId") != null) {
             return "redirect:/loja";
         }
 
         if (error != null) {
-            model.addAttribute("erro", "Email ou senha inválidos");
+            model.addAttribute("erro", error);
         }
 
         if (logout != null) {
             model.addAttribute("mensagem", "Você saiu do sistema com sucesso");
         }
 
-        return "loja/login-cliente";
+        model.addAttribute("title", "Login do Cliente");
+        model.addAttribute("content", "loja/login-cliente :: content");
+
+        return "loja/base";
     }
 }

@@ -3,23 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${title} ? ${title} + ' - E-commerce' : 'E-commerce'">E-commerce</title>
+    <title th:text="${title ?: 'E-commerce'}">E-commerce</title>
     <meta name="_csrf" th:content="${_csrf.token}"/>
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/static/css/loja.css">
+    <th:block th:replace="${head} ?: ~{}"></th:block>
 </head>
 <body>
 <!-- Header da Loja -->
-<header class="bg-dark text-white">
+<header class="p-3 text-white" style="background-color: #DA291C;">
     <div class="container">
-        <div class="d-flex flex-wrap align-items-center justify-content-between py-3">
-            <a href="/loja" class="d-flex align-items-center text-white text-decoration-none">
-                <span class="fs-4">E-commerce</span>
-            </a>
-
-            <!-- Formulário de Busca -->
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 style="color: #FFC72C;">
+                <a href="/loja" style="color: inherit; text-decoration: none;">
+                    <img src="/static/images/m-mcdonalds-removebg-preview.png" alt="Logo Mc Donalds" style="width:40px; height:auto; vertical-align: middle;" class="me-2">
+                    Mc Donalds
+                </a>
+            </h1>
 
             <!-- Ícones de Usuário e Carrinho -->
             <div class="text-end" id="headerUserArea">
@@ -73,7 +75,7 @@
 
 <!-- Conteúdo Principal - Substituído em cada página -->
 <main class="container py-4">
-    <div th:replace="${content}">
+    <div th:replace="${content ?: '~{}'}">
         <!-- Conteúdo será substituído -->
     </div>
 </main>
@@ -83,7 +85,7 @@
     <div class="container">
         <div class="row">
             <div class="col-md-4 mb-3">
-                <h5>E-commerce</h5>
+                <h5>Mc Donalds</h5>
                 <p class="text-muted">Seu destino para compras online.</p>
             </div>
 
@@ -110,7 +112,7 @@
         <hr>
 
         <div class="text-center">
-            <p class="mb-0">&copy; 2025 E-commerce. Todos os direitos reservados.</p>
+            <p class="mb-0">&copy; 2025 Mc Donalds. Todos os direitos reservados.</p>
         </div>
     </div>
 </footer>
@@ -121,23 +123,31 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Verificar estado de login
+        console.log("Verificando login...");
         verificarLogin();
 
         // Adicionar evento de logout
-        document.getElementById('btnLogout').addEventListener('click', function(e) {
-            e.preventDefault();
-            realizarLogout();
-        });
+        var btnLogout = document.getElementById('btnLogout');
+        if (btnLogout) {
+            btnLogout.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log("Botão de logout clicado!");
+                realizarLogout();
+            });
+        } else {
+            console.error("Botão de logout não encontrado!");
+        }
     });
 
     function verificarLogin() {
         fetch('/api/cliente-auth/check')
             .then(response => response.json())
             .then(data => {
+                console.log("Resposta da verificação:", data);
                 if (data.logado) {
                     // Cliente está logado
-                    document.getElementById('clienteNome').textContent = data.cliente.nome;
+                    console.log("Cliente logado:", data.cliente);
+                    document.getElementById('clienteNome').textContent = data.cliente.nome.split(' ')[0] || 'Cliente';
                     document.getElementById('notLoggedIn').style.display = 'none';
                     document.getElementById('loggedIn').style.display = 'block';
 
@@ -146,6 +156,7 @@
                     document.getElementById('cartItemCount2').textContent = count;
                 } else {
                     // Cliente não está logado
+                    console.log("Cliente não está logado");
                     document.getElementById('notLoggedIn').style.display = 'block';
                     document.getElementById('loggedIn').style.display = 'none';
                 }
@@ -156,14 +167,19 @@
     }
 
     function realizarLogout() {
+        console.log("Iniciando processo de logout...");
         fetch('/api/cliente-auth/logout', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log("Resposta do logout recebida:", response);
+            return response.json();
+        })
         .then(data => {
+            console.log("Logout realizado com sucesso:", data);
             // Redirecionar para a página inicial após logout
             window.location.href = '/loja?logout=true';
         })
@@ -174,6 +190,6 @@
 </script>
 
 <!-- Bloco para scripts adicionais -->
-<th:block th:replace="${scripts}"></th:block>
+<th:block th:replace="${scripts} ?: ~{}"></th:block>
 </body>
 </html>

@@ -44,8 +44,11 @@ public class LojaPageController {
         model.addAttribute("totalPages", produtosPage.getTotalPages());
         model.addAttribute("filtroNome", nome);
         model.addAttribute("filtroCodigo", codigo);
+        model.addAttribute("title", "Pagina Inicial");
+        model.addAttribute("content", "~{loja/home :: content}");
 
-        return "loja/home";
+
+        return "loja/base";
     }
 
     @GetMapping("/produto/{id}")
@@ -56,7 +59,9 @@ public class LojaPageController {
         ProdutoResponseDTO produtoDTO = ProdutoResponseDTO.fromEntity(produto);
 
         model.addAttribute("produto", produtoDTO);
+        model.addAttribute("title", produtoDTO.getNome() + " - Detalhes do Produto");
+        model.addAttribute("content", "loja/produto-detalhes :: content");
 
-        return "loja/produto-detalhes";
+        return "loja/base";
     }
 }

@@ -62,9 +62,13 @@ public class ClienteAuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request) {
+        System.out.println("Endpoint de logout chamado");
         HttpSession session = request.getSession(false);
         if (session != null) {
             session.invalidate();
+            System.out.println("Sessão invalidada com sucesso");
+        } else {
+            System.out.println("Nenhuma sessão encontrada para invalidar");
         }
 
         Map<String, String> response = new HashMap<>();
@@ -75,20 +79,22 @@ public class ClienteAuthController {
 
     @GetMapping("/check")
     public ResponseEntity<?> checkLogin(HttpServletRequest request) {
+        // Obter a sessão SEM criar uma nova
         HttpSession session = request.getSession(false);
 
+        Map<String, Object> response = new HashMap<>();
+
         if (session != null && session.getAttribute("clienteId") != null) {
-            Map<String, Object> response = new HashMap<>();
             response.put("logado", true);
             response.put("cliente", Map.of(
                     "id", session.getAttribute("clienteId"),
                     "nome", session.getAttribute("clienteNome"),
                     "email", session.getAttribute("clienteEmail")
             ));
-
-            return ResponseEntity.ok(response);
         } else {
-            return ResponseEntity.ok(Map.of("logado", false));
+            response.put("logado", false);
         }
+
+        return ResponseEntity.ok(response);
     }
 }

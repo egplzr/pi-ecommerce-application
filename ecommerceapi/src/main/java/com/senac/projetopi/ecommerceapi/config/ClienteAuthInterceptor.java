@@ -11,12 +11,12 @@ public class ClienteAuthInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        // Obter a sessão (se existir)
+        // Obter a sessão sem criar uma nova
         HttpSession session = request.getSession(false);
 
         // Verificar se o cliente está logado
         if (session == null || session.getAttribute("clienteId") == null) {
-            // Redirecionar para a página de login
+            // Redirecionar para a página de login com mensagem de erro
             response.sendRedirect("/loja/login-cliente?error=Você precisa estar logado para acessar esta página");
             return false;
         }
