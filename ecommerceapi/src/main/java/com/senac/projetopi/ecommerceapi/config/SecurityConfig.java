@@ -38,11 +38,11 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .ignoringRequestMatchers("/api/auth/**", "/api/clientes/**")
+                        .ignoringRequestMatchers("/api/auth/**", "/api/cliente/**")
                 )
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/clientes/**").permitAll()
+                        .requestMatchers("/api/cliente/**").permitAll()
                         .requestMatchers("/loja/**").permitAll()
                         .requestMatchers("/api/cliente/auth/**").permitAll() // Nova linha para permitir autenticação de cliente
                         .requestMatchers("/api/cliente/**").authenticated() // Nova linha para proteger API do cliente

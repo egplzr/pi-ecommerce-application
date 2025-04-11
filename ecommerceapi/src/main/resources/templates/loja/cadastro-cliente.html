@@ -422,7 +422,7 @@
         submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processando...';
 
         // Enviar dados para a API
-        fetch('/api/clientes', {
+        fetch('/api/cliente', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -452,7 +452,7 @@
         })
         .catch(error => {
             // Mostrar mensagem de erro
-            document.getElementById('errorAlert').textContent = 'Erro ao cadastrar: ' + error.message;
+            document.getElementById('errorAlert').innerText = 'Erro ao cadastrar:\n' + error.message;
             document.getElementById('errorAlert').style.display = 'block';
             document.getElementById('successAlert').style.display = 'none';
         })

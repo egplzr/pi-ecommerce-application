@@ -15,22 +15,30 @@
   <!-- Banner Principal (opcional) -->
   <header class="p-3 rounded mb-4" style="background-color: #DA291C;">
     <div class="container">
-      <div class="d-flex justify-content-between align-items-center">
-        <h1 style="color: #FFC72C;">
-          <a href="/loja" style="color: inherit; text-decoration: none;">
-            <img src="/static/images/m-mcdonalds-removebg-preview.png" alt="Logo Mc Donalds" style="width:40px; height:auto; vertical-align: middle;" class="me-2">
-            Mc Donalds
-          </a>
-        </h1>
-        <div>
-          <a href="/loja/login-cliente" class="btn btn-outline-light me-2">
-            <i class="bi bi-person-fill me-1"></i> Login
-          </a>
-          <a href="/loja/carrinho" class="btn btn-warning">
-            <i class="bi bi-cart-fill me-1"></i> Carrinho
-            <span class="badge bg-dark ms-1" id="cartItemCount">0</span>
-          </a>
+      <h1 style="color: #FFC72C;">
+        <a href="/loja" style="color: inherit; text-decoration: none;">
+          <img src="/static/images/m-mcdonalds-removebg-preview.png" alt="Logo Mc Donalds" style="width:40px; height:auto; vertical-align: middle;" class="me-2">
+          Mc Donalds
+        </a>
+      </h1>
+      <div class="text-end">
+        <div class="dropdown d-inline-block me-2">
+          <button class="btn btn-outline-light dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-fill me-1"></i> <span id="loginText">Minha Conta</span>
+          </button>
+          <ul class="dropdown-menu" aria-labelledby="userMenu">
+            <li id="loginOption"><a class="dropdown-item" href="/loja/login-cliente">Login</a></li>
+            <li id="perfilOption" style="display: none;"><a class="dropdown-item" href="/loja/perfil">Meu Perfil</a></li>
+            <li id="divider" style="display: none;"><hr class="dropdown-divider"></li>
+            <li id="logoutOption" style="display: none;"><a class="dropdown-item" href="#" onclick="fazerLogout(); return false;">Sair</a></li>
+          </ul>
         </div>
+
+
+        <a href="/loja/carrinho" class="btn btn-warning">
+          <i class="bi bi-cart-fill me-1"></i> Carrinho
+          <span class="badge bg-dark ms-1" id="cartItemCount">0</span>
+        </a>
       </div>
     </div>
   </header>
@@ -203,6 +211,49 @@
           });
       });
   });
+
+  // Verificar status de autenticação
+  document.addEventListener('DOMContentLoaded', function () {
+  fetch('/api/cliente/auth/status')
+    .then(response => response.json())
+    .then(data => {
+      if (data.autenticado) {
+        document.getElementById('loginText').textContent = data.clienteNome || 'Minha Conta';
+        document.getElementById('loginOption').style.display = 'none';
+        document.getElementById('perfilOption').style.display = 'block';
+        document.getElementById('divider').style.display = 'block';
+        document.getElementById('logoutOption').style.display = 'block';
+      } else {
+        document.getElementById('loginText').textContent = 'Login';
+        document.getElementById('loginOption').style.display = 'block';
+        document.getElementById('perfilOption').style.display = 'none';
+        document.getElementById('divider').style.display = 'none';
+        document.getElementById('logoutOption').style.display = 'none';
+      }
+    })
+    .catch(error => {
+      console.error('Erro ao verificar autenticação:', error);
+    });
+});
+
+
+  // Função para fazer logout
+  function fazerLogout() {
+    fetch('/api/cliente/auth/logout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => {
+      // Independente do resultado, redirecionar para a página inicial
+      window.location.href = '/loja';
+    })
+    .catch(error => {
+      console.error('Erro ao fazer logout:', error);
+      window.location.href = '/loja';
+    });
+  }
 </script>
 
 </body>

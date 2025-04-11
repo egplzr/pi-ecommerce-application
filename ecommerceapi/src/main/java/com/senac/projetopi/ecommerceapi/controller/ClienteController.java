@@ -12,6 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -50,6 +53,44 @@ public class ClienteController {
             Cliente clienteAtualizado = clienteService.atualizarPerfilCliente(clienteId, clienteDTO);
             clienteAtualizado.setSenha(null); // Não retornar a senha
             return ResponseEntity.ok(clienteAtualizado);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping
+    public ResponseEntity<?> criarCliente(@Valid @RequestBody ClienteDTO clienteDTO) {
+        try {
+            Cliente cliente = new Cliente();
+            cliente.setNome(clienteDTO.getNome());
+            cliente.setCpf(clienteDTO.getCpf());
+            cliente.setEmail(clienteDTO.getEmail());
+            cliente.setSenha(clienteDTO.getSenha());
+            cliente.setEnderecoFaturamento(clienteDTO.getEnderecoFaturamento());
+            cliente.setEnderecosEntrega(clienteDTO.getEnderecosEntrega());
+
+            // Converter a data de nascimento de String para LocalDateTime
+            if (clienteDTO.getDataNascimento() != null && !clienteDTO.getDataNascimento().toString().isEmpty()) {
+                try {
+                    // Se for uma string no formato yyyy-MM-dd (do input date HTML)
+                    LocalDate date = LocalDate.parse(clienteDTO.getDataNascimento().toString());
+                    cliente.setDataNascimento(LocalDateTime.of(date, LocalTime.MIDNIGHT));
+                } catch (Exception e) {
+                    return ResponseEntity.badRequest().body("Formato de data inválido. Use o formato yyyy-MM-dd");
+                }
+            }
+
+            // Processar o gênero se fornecido
+            if (clienteDTO.getGenero() != null && !clienteDTO.getGenero().isEmpty()) {
+                try {
+                    cliente.setGenero(Cliente.Genero.valueOf(clienteDTO.getGenero()));
+                } catch (IllegalArgumentException e) {
+                    return ResponseEntity.badRequest().body("Gênero inválido. Use MASCULINO, FEMININO ou OUTRO");
+                }
+            }
+
+            Cliente novoCliente = clienteService.criar(cliente);
+            return ResponseEntity.status(HttpStatus.CREATED).body(novoCliente);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

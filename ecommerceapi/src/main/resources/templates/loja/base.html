@@ -18,22 +18,29 @@
             <a href="/loja" class="d-flex align-items-center text-white text-decoration-none">
                 <span class="fs-4">E-commerce</span>
             </a>
-
+            <h1 style="color: #FFC72C;">
+                <a href="/loja" style="color: inherit; text-decoration: none;">
+                    <img src="/static/images/m-mcdonalds-removebg-preview.png" alt="Logo Mc Donalds" style="width:40px; height:auto; vertical-align: middle;" class="me-2">
+                    Mc Donalds
+                </a>
+            </h1>
             <!-- Formulário de Busca -->
 
             <!-- Ícones de Usuário e Carrinho -->
             <div class="text-end">
                 <div class="dropdown d-inline-block me-2">
                     <button class="btn btn-outline-light dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-person-fill me-1"></i> Minha Conta
+                        <i class="bi bi-person-fill me-1"></i> <span id="loginText">Minha Conta</span>
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="userMenu">
-                        <li><a class="dropdown-item" href="/loja/login-cliente">Login</a></li>
-                        <li><a class="dropdown-item" href="/loja/perfil">Meu Perfil</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" onclick="fazerLogout(); return false;">Sair</a></li>
+                        <li id="loginOption"><a class="dropdown-item" href="/loja/login-cliente">Login</a></li>
+                        <li id="perfilOption" style="display: none;"><a class="dropdown-item" href="/loja/perfil">Meu Perfil</a></li>
+                        <li id="divider" style="display: none;"><hr class="dropdown-divider"></li>
+                        <li id="logoutOption" style="display: none;"><a class="dropdown-item" href="#" onclick="fazerLogout(); return false;">Sair</a></li>
                     </ul>
                 </div>
+
+
                 <a href="/loja/carrinho" class="btn btn-warning">
                     <i class="bi bi-cart-fill me-1"></i> Carrinho
                     <span class="badge bg-dark ms-1" id="cartItemCount">0</span>
