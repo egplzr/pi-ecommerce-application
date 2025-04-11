@@ -44,12 +44,15 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/clientes/**").permitAll()
                         .requestMatchers("/loja/**").permitAll()
+                        .requestMatchers("/api/cliente/auth/**").permitAll() // Nova linha para permitir autenticação de cliente
+                        .requestMatchers("/api/cliente/**").authenticated() // Nova linha para proteger API do cliente
+                        .requestMatchers("/loja/perfil/**").authenticated() // Nova linha para proteger página de perfil
                         .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**").permitAll()
                         .requestMatchers("/login").permitAll()
                         .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
                         .requestMatchers("/usuarios").hasRole("ADMIN")
                         .requestMatchers("/api/produtos/**").hasAnyRole("ADMIN", "ESTOQUISTA")
-                        .requestMatchers("/produtos").hasAnyRole("ADMIN", "ESTOQUISTA") // <- Adicione esta linha aqui
+                        .requestMatchers("/produtos").hasAnyRole("ADMIN", "ESTOQUISTA")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
