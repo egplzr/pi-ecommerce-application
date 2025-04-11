@@ -8,6 +8,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
@@ -37,19 +38,18 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .ignoringRequestMatchers("/api/auth/**", "/api/clientes/**", "/api/cliente-auth/**")
+                        .ignoringRequestMatchers("/api/auth/**", "/api/clientes/**")
                 )
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/clientes/**").permitAll()
-                        .requestMatchers("/api/cliente-auth/**").permitAll()
                         .requestMatchers("/loja/**").permitAll()
                         .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**").permitAll()
                         .requestMatchers("/login").permitAll()
                         .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
                         .requestMatchers("/usuarios").hasRole("ADMIN")
                         .requestMatchers("/api/produtos/**").hasAnyRole("ADMIN", "ESTOQUISTA")
-                        .requestMatchers("/produtos").hasAnyRole("ADMIN", "ESTOQUISTA")
+                        .requestMatchers("/produtos").hasAnyRole("ADMIN", "ESTOQUISTA") // <- Adicione esta linha aqui
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

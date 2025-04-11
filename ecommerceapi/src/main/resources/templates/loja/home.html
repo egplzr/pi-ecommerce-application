@@ -1,8 +1,41 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${title} ? ${title} + ' - E-commerce' : 'E-commerce'">E-commerce</title>
+  <meta name="_csrf" th:content="${_csrf.token}"/>
+  <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="/static/css/loja.css">
+</head>
 <body>
-<!-- Fragment com o conteúdo específico da página home -->
 <div th:fragment="content">
+  <!-- Banner Principal (opcional) -->
+  <header class="p-3 rounded mb-4" style="background-color: #DA291C;">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center">
+        <h1 style="color: #FFC72C;">
+          <a href="/loja" style="color: inherit; text-decoration: none;">
+            <img src="/static/images/m-mcdonalds-removebg-preview.png" alt="Logo Mc Donalds" style="width:40px; height:auto; vertical-align: middle;" class="me-2">
+            Mc Donalds
+          </a>
+        </h1>
+        <div>
+          <a href="/loja/login-cliente" class="btn btn-outline-light me-2">
+            <i class="bi bi-person-fill me-1"></i> Login
+          </a>
+          <a href="/loja/carrinho" class="btn btn-warning">
+            <i class="bi bi-cart-fill me-1"></i> Carrinho
+            <span class="badge bg-dark ms-1" id="cartItemCount">0</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+
   <!-- Lista de Produtos -->
   <div id="produtos" class="row">
     <!-- Mensagem quando não há produtos -->
@@ -101,34 +134,76 @@
   </div>
 </div>
 
-<th:block th:fragment="scripts">
-  <script>
-    // Função para adicionar produtos ao carrinho - será mantida apenas nesta página específica
-    document.addEventListener('DOMContentLoaded', function() {
-      // Adicionar evento aos botões de "Adicionar ao Carrinho"
-      const addToCartButtons = document.querySelectorAll('.add-to-cart');
-      addToCartButtons.forEach(button => {
-        button.addEventListener('click', function(event) {
-          // Obtenha os dados do produto a partir dos atributos data-* do botão
-          const produto = {
-            produtoId: this.getAttribute('data-produto-id'),
-            nome: this.getAttribute('data-produto-nome'),
-            preco: this.getAttribute('data-produto-preco'),
-            imagemUrl: this.getAttribute('data-produto-imagem'),
-            quantidade: 1  // inicialmente 1 item
-          };
-
-          adicionarAoCarrinho(produto);
-
-          // Efeito visual
-          this.classList.add('cart-animation');
-          setTimeout(() => {
-            this.classList.remove('cart-animation');
-          }, 500);
-        });
+<script>
+  // Atualiza o contador de itens do carrinho no header usando a chave "cart"
+  function updateCartCount() {
+      let cart = JSON.parse(localStorage.getItem('cart')) || [];
+      let count = 0;
+      cart.forEach(item => {
+          count += item.quantidade;
       });
-    });
-  </script>
-</th:block>
+      document.getElementById('cartItemCount').innerText = count;
+  }
+
+  // Função para adicionar o produto completo ao carrinho (com dados: id, nome, preço, imagem e quantidade)
+  function adicionarAoCarrinho(produto) {
+      let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+      // Verificar se o produto já existe no carrinho pelo produtoId
+      const itemExistente = cart.find(item => item.produtoId === produto.produtoId);
+
+      if (itemExistente) {
+          // Atualiza a quantidade do item existente
+          itemExistente.quantidade += parseInt(produto.quantidade);
+      } else {
+          // Adiciona o novo item com todos os dados
+          cart.push({
+              produtoId: produto.produtoId,
+              nome: produto.nome,
+              preco: parseFloat(produto.preco),
+              imagemUrl: produto.imagemUrl,
+              quantidade: parseInt(produto.quantidade)
+          });
+      }
+
+      // Salvar o carrinho atualizado
+      localStorage.setItem('cart', JSON.stringify(cart));
+
+      // Atualizar o contador de itens no header
+      updateCartCount();
+
+      // Feedback visual ao usuário
+      alert('Produto adicionado ao carrinho!');
+  }
+
+  // Inicializa ao carregar a página
+  document.addEventListener('DOMContentLoaded', function() {
+      updateCartCount();
+
+      // Adicionar evento aos botões de "Adicionar ao Carrinho"
+      const addToCartButtons = document.querySelectorAll('.add-to-cart, [class*="adicionar-ao-carrinho"]');
+      addToCartButtons.forEach(button => {
+          button.addEventListener('click', function(event) {
+              // Obtenha os dados do produto a partir dos atributos data-* do botão
+              const produto = {
+                  produtoId: this.getAttribute('data-produto-id'),
+                  nome: this.getAttribute('data-produto-nome'),
+                  preco: this.getAttribute('data-produto-preco'),
+                  imagemUrl: this.getAttribute('data-produto-imagem'),
+                  quantidade: 1  // inicialmente 1 item
+              };
+
+              adicionarAoCarrinho(produto);
+
+              // Efeito visual (exemplo de animação) se necessário
+              this.classList.add('cart-animation');
+              setTimeout(() => {
+                  this.classList.remove('cart-animation');
+              }, 500);
+          });
+      });
+  });
+</script>
+
 </body>
 </html>
