@@ -92,7 +92,9 @@ public class ClienteController {
             Cliente novoCliente = clienteService.criar(cliente);
             return ResponseEntity.status(HttpStatus.CREATED).body(novoCliente);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);  // Retorne sempre um JSON
         }
     }
 
@@ -114,7 +116,9 @@ public class ClienteController {
 
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);  // Retorne sempre um JSON
         }
     }
 
@@ -136,7 +140,9 @@ public class ClienteController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);  // Retorne sempre um JSON
         }
     }
 
@@ -158,7 +164,9 @@ public class ClienteController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);  // Retorne sempre um JSON
         }
     }
 }
