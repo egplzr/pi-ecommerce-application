@@ -136,7 +136,9 @@ public class ClienteService {
             }
         }
 
-        if (clienteDTO.getSenha() != null && !clienteDTO.getSenha().isEmpty()) {
+        // Só atualiza a senha se não for a string especial "manterSenhaAtual"
+        if (clienteDTO.getSenha() != null && !clienteDTO.getSenha().isEmpty()
+                && !clienteDTO.getSenha().equals("manterSenhaAtual")) {
             cliente.setSenha(passwordEncoder.encode(clienteDTO.getSenha()));
         }
 

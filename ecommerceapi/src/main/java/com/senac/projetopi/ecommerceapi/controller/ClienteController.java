@@ -41,7 +41,9 @@ public class ClienteController {
     }
 
     @PutMapping("/atualizar")
-    public ResponseEntity<?> atualizarPerfil(@Valid @RequestBody ClienteDTO clienteDTO, HttpServletRequest request) {
+    public ResponseEntity<?> atualizarPerfil(@RequestBody ClienteDTO clienteDTO, HttpServletRequest request) {
+        // Remova a anotação @Valid que força a validação dos campos obrigatórios
+
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("clienteId") == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuário não autenticado");

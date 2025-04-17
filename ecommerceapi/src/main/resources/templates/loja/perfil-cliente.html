@@ -5,8 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu Perfil</title>
-    <meta name="_csrf" id="_csrf" content="${_csrf.token}" />
-    <meta name="_csrf_header" id="_csrf_header" content="${_csrf.headerName}" />
     <!-- Link para o Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
@@ -289,7 +287,8 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    function verificarAutenticacao() {
+    // Função para verificar autenticação
+function verificarAutenticacao() {
     fetch('/api/cliente/auth/status')
         .then(response => response.json())
         .then(data => {
@@ -305,165 +304,214 @@
         });
 }
 
-    // Variáveis globais para tokens CSRF
-    const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-    const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+// Variáveis para manipulação dos modais
+let modalNovoEndereco = null;
+let modalConfirmacao = null;
 
-    // Variáveis para manipulação dos modais
-    let modalNovoEndereco = null;
-    let modalConfirmacao = null;
+// Dados do cliente
+let dadosCliente = null;
 
-    // Dados do cliente
-    let dadosCliente = null;
-
-    // Inicialização da página
-    document.addEventListener('DOMContentLoaded', function() {
-        verificarAutenticacao();
-        // Inicializar modais
-        modalNovoEndereco = new bootstrap.Modal(document.getElementById('modalNovoEndereco'));
-        modalConfirmacao = new bootstrap.Modal(document.getElementById('modalConfirmacao'));
-
-        // Carregar dados do cliente
-        carregarDadosCliente();
-
-        // Adicionar eventos aos formulários
-        document.getElementById('formDados').addEventListener('submit', salvarDadosPessoais);
-        document.getElementById('formSenha').addEventListener('submit', alterarSenha);
-        document.getElementById('btnSalvarEndereco').addEventListener('click', salvarNovoEndereco);
-
-        // Adicionar validação de CEP
-        document.getElementById('cep').addEventListener('blur', buscarCep);
-    });
-
-    // Função para exibir mensagens de sucesso
-    function mostrarSucesso(mensagem) {
-        document.getElementById('successMessage').textContent = mensagem;
-        document.getElementById('successAlert').style.display = 'block';
-        document.getElementById('errorAlert').style.display = 'none';
-
-        // Ocultar após 5 segundos
-        setTimeout(() => {
-            document.getElementById('successAlert').style.display = 'none';
-        }, 5000);
-    }
-
-    // Função para exibir mensagens de erro
-    function mostrarErro(mensagem) {
-        document.getElementById('errorMessage').textContent = mensagem;
-        document.getElementById('errorAlert').style.display = 'block';
-        document.getElementById('successAlert').style.display = 'none';
-
-        // Ocultar após 5 segundos
-        setTimeout(() => {
-            document.getElementById('errorAlert').style.display = 'none';
-        }, 5000);
-    }
+// Inicialização da página
+document.addEventListener('DOMContentLoaded', function() {
+    verificarAutenticacao();
+    // Inicializar modais
+    modalNovoEndereco = new bootstrap.Modal(document.getElementById('modalNovoEndereco'));
+    modalConfirmacao = new bootstrap.Modal(document.getElementById('modalConfirmacao'));
 
     // Carregar dados do cliente
-    function carregarDadosCliente() {
-        fetch('/api/cliente/perfil')
-            .then(response => {
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        window.location.href = '/loja/login-cliente';
-                        throw new Error('Usuário não autenticado');
-                    }
-                    return response.json().then(err => { throw new Error(err) });
-                }
-                return response.json();
-            })
-            .then(data => {
-                dadosCliente = data;
-                preencherFormularioCliente(data);
-                renderizarEnderecos(data.enderecosEntrega || []);
-            })
-            .catch(error => {
-                console.error('Erro ao carregar dados do cliente:', error);
-                mostrarErro('Erro ao carregar seus dados. Por favor, tente novamente.');
-            });
-    }
+    carregarDadosCliente();
 
-    // Preenche os campos do formulário com os dados do cliente
-    function preencherFormularioCliente(cliente) {
-        document.getElementById('nome').value = cliente.nome || '';
-        document.getElementById('email').value = cliente.email || '';
-        document.getElementById('cpf').value = cliente.cpf || '';
+    // Adicionar eventos aos formulários
+    document.getElementById('formDados').addEventListener('submit', salvarDadosPessoais);
+    document.getElementById('formSenha').addEventListener('submit', alterarSenha);
+    document.getElementById('btnSalvarEndereco').addEventListener('click', salvarNovoEndereco);
 
-        if (cliente.dataNascimento) {
-            // Converter data para formato YYYY-MM-DD para o input date
-            const data = new Date(cliente.dataNascimento);
-            const dataFormatada = data.toISOString().split('T')[0];
-            document.getElementById('dataNascimento').value = dataFormatada;
-        }
+    // Adicionar validação de CEP
+    document.getElementById('cep').addEventListener('blur', buscarCep);
+});
 
-        if (cliente.genero) {
-            document.getElementById('genero').value = cliente.genero;
-        }
-    }
+// Função para exibir mensagens de sucesso
+function mostrarSucesso(mensagem) {
+    document.getElementById('successMessage').textContent = mensagem;
+    document.getElementById('successAlert').style.display = 'block';
+    document.getElementById('errorAlert').style.display = 'none';
 
-    // Renderizar lista de endereços
-    function renderizarEnderecos(enderecos) {
-        const listaEnderecos = document.getElementById('listaEnderecos');
-        listaEnderecos.innerHTML = '';
+    // Ocultar após 5 segundos
+    setTimeout(() => {
+        document.getElementById('successAlert').style.display = 'none';
+    }, 5000);
+}
 
-        if (!enderecos || enderecos.length === 0) {
-            listaEnderecos.innerHTML = `
-                <div class="col-12 text-center py-4">
-                    <p class="text-muted">Você ainda não possui endereços cadastrados.</p>
-                </div>
-            `;
-            return;
-        }
+// Função para exibir mensagens de erro
+function mostrarErro(mensagem) {
+    document.getElementById('errorMessage').textContent = mensagem;
+    document.getElementById('errorAlert').style.display = 'block';
+    document.getElementById('successAlert').style.display = 'none';
 
-        enderecos.forEach((endereco, index) => {
-            const isPadrao = index === 0; // O primeiro endereço é considerado o padrão
+    // Ocultar após 5 segundos
+    setTimeout(() => {
+        document.getElementById('errorAlert').style.display = 'none';
+    }, 5000);
+}
 
-            const enderecoCard = document.createElement('div');
-            enderecoCard.className = 'col-md-6 mb-3';
-            enderecoCard.innerHTML = `
-                <div class="card address-card p-3 ${isPadrao ? 'default' : ''}">
-                    ${isPadrao ? '<span class="badge bg-success address-badge">Padrão</span>' : ''}
-                    <div class="card-body">
-                        <p class="card-text">${endereco}</p>
-                        <div class="address-actions">
-                            ${!isPadrao ? `
-                                <button class="btn btn-sm btn-outline-primary me-2" onclick="definirEnderecoPadrao(${index})">
-                                    Definir como Padrão
-                                </button>
-                            ` : ''}
-                            <button class="btn btn-sm btn-outline-danger" onclick="confirmarRemoverEndereco(${index})">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
+// Carregar dados do cliente
+function carregarDadosCliente() {
+    // Verificar autenticação antes de fazer a requisição
+    fetch('/api/cliente/auth/status')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.autenticado) {
+                window.location.href = '/loja/login-cliente';
+                throw new Error('Sessão expirada');
+            }
 
-            listaEnderecos.appendChild(enderecoCard);
-        });
-    }
-
-    // Salvar dados pessoais
-    function salvarDadosPessoais(event) {
-        event.preventDefault();
-
-        const dadosAtualizados = {
-            nome: document.getElementById('nome').value,
-            dataNascimento: document.getElementById('dataNascimento').value,
-            genero: document.getElementById('genero').value
-        };
-
-        fetch('/api/cliente/atualizar', {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                [header]: token
-            },
-            body: JSON.stringify(dadosAtualizados)
+            // Se estiver autenticado, continuar com a requisição
+            return fetch('/api/cliente/perfil');
         })
         .then(response => {
+            console.log('Response status carregarDadosCliente:', response.status);
             if (!response.ok) {
-                return response.json().then(err => { throw new Error(err) });
+                if (response.status === 401) {
+                    window.location.href = '/loja/login-cliente';
+                    throw new Error('Usuário não autenticado');
+                }
+                return response.text().then(text => {
+                    console.log('Error response text:', text);
+                    try {
+                        const errorData = JSON.parse(text);
+                        throw new Error(errorData.message || 'Erro desconhecido');
+                    } catch (e) {
+                        throw new Error('Erro ao processar resposta: ' + text);
+                    }
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            dadosCliente = data;
+            preencherFormularioCliente(data);
+            renderizarEnderecos(data.enderecosEntrega || []);
+        })
+        .catch(error => {
+            console.error('Erro ao carregar dados do cliente:', error);
+            try {
+                if (error.message) {
+                    mostrarErro(error.message);
+                } else {
+                    mostrarErro('Erro ao carregar seus dados. Por favor, tente novamente.');
+                }
+            } catch (e) {
+                mostrarErro('Erro ao carregar seus dados. Por favor, tente novamente.');
+            }
+        });
+}
+
+// Preenche os campos do formulário com os dados do cliente
+function preencherFormularioCliente(cliente) {
+    document.getElementById('nome').value = cliente.nome || '';
+    document.getElementById('email').value = cliente.email || '';
+    document.getElementById('cpf').value = cliente.cpf || '';
+
+    if (cliente.dataNascimento) {
+        // Converter data para formato YYYY-MM-DD para o input date
+        const data = new Date(cliente.dataNascimento);
+        const dataFormatada = data.toISOString().split('T')[0];
+        document.getElementById('dataNascimento').value = dataFormatada;
+    }
+
+    if (cliente.genero) {
+        document.getElementById('genero').value = cliente.genero;
+    }
+}
+
+// Renderizar lista de endereços
+function renderizarEnderecos(enderecos) {
+    const listaEnderecos = document.getElementById('listaEnderecos');
+    listaEnderecos.innerHTML = '';
+
+    if (!enderecos || enderecos.length === 0) {
+        listaEnderecos.innerHTML = `
+            <div class="col-12 text-center py-4">
+                <p class="text-muted">Você ainda não possui endereços cadastrados.</p>
+            </div>
+        `;
+        return;
+    }
+
+    enderecos.forEach((endereco, index) => {
+        const isPadrao = index === 0; // O primeiro endereço é considerado o padrão
+
+        const enderecoCard = document.createElement('div');
+        enderecoCard.className = 'col-md-6 mb-3';
+        enderecoCard.innerHTML = `
+            <div class="card address-card p-3 ${isPadrao ? 'default' : ''}">
+                ${isPadrao ? '<span class="badge bg-success address-badge">Padrão</span>' : ''}
+                <div class="card-body">
+                    <p class="card-text">${endereco}</p>
+                    <div class="address-actions">
+                        ${!isPadrao ? `
+                            <button class="btn btn-sm btn-outline-primary me-2" onclick="definirEnderecoPadrao(${index})">
+                                Definir como Padrão
+                            </button>
+                        ` : ''}
+                        <button class="btn btn-sm btn-outline-danger" onclick="confirmarRemoverEndereco(${index})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        listaEnderecos.appendChild(enderecoCard);
+    });
+}
+
+// Salvar dados pessoais
+function salvarDadosPessoais(event) {
+    event.preventDefault();
+
+    // Verificar autenticação antes de fazer a requisição
+    fetch('/api/cliente/auth/status')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.autenticado) {
+                window.location.href = '/loja/login-cliente';
+                throw new Error('Sessão expirada');
+            }
+
+            // Incluir todos os campos obrigatórios do cliente, não apenas os que estamos alterando
+            const dadosAtualizados = {
+                nome: document.getElementById('nome').value,
+                email: document.getElementById('email').value, // Mesmo que seja somente leitura na interface
+                cpf: document.getElementById('cpf').value, // Mesmo que seja somente leitura na interface
+                dataNascimento: document.getElementById('dataNascimento').value,
+                genero: document.getElementById('genero').value,
+                // Incluindo os campos que o backend exige, usando os dados que já temos
+                enderecoFaturamento: dadosCliente.enderecoFaturamento,
+                // O campo senha deve ser incluído mesmo que não esteja sendo alterado
+                senha: "manterSenhaAtual" // Uma indicação para o backend manter a senha atual
+            };
+
+            return fetch('/api/cliente/atualizar', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(dadosAtualizados)
+            });
+        })
+        .then(response => {
+            console.log('Response status salvarDadosPessoais:', response.status);
+            if (!response.ok) {
+                return response.text().then(text => {
+                    console.log('Error response text:', text);
+                    try {
+                        const errorData = JSON.parse(text);
+                        throw new Error(errorData.message || 'Erro desconhecido');
+                    } catch (e) {
+                        throw new Error('Erro ao processar resposta: ' + text);
+                    }
+                });
             }
             return response.json();
         })
@@ -473,41 +521,64 @@
         })
         .catch(error => {
             console.error('Erro ao atualizar dados:', error);
-            mostrarErro('Erro ao atualizar seus dados. Por favor, tente novamente.');
+            try {
+                if (error.message) {
+                    mostrarErro(error.message);
+                } else {
+                    mostrarErro('Erro ao atualizar seus dados. Por favor, tente novamente.');
+                }
+            } catch (e) {
+                mostrarErro('Erro ao atualizar seus dados. Por favor, tente novamente.');
+            }
         });
+}
+
+// Alterar senha
+function alterarSenha(event) {
+    event.preventDefault();
+
+    const senhaAtual = document.getElementById('senhaAtual').value;
+    const novaSenha = document.getElementById('novaSenha').value;
+    const confirmarSenha = document.getElementById('confirmarSenha').value;
+
+    if (novaSenha !== confirmarSenha) {
+        mostrarErro('As senhas não conferem!');
+        return;
     }
 
-    // Alterar senha
-    function alterarSenha(event) {
-        event.preventDefault();
+    // Verificar autenticação antes de fazer a requisição
+    fetch('/api/cliente/auth/status')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.autenticado) {
+                window.location.href = '/loja/login-cliente';
+                throw new Error('Sessão expirada');
+            }
 
-        const senhaAtual = document.getElementById('senhaAtual').value;
-        const novaSenha = document.getElementById('novaSenha').value;
-        const confirmarSenha = document.getElementById('confirmarSenha').value;
+            const dadosAtualizados = {
+                senha: novaSenha
+            };
 
-        if (novaSenha !== confirmarSenha) {
-            mostrarErro('As senhas não conferem!');
-            return;
-        }
-
-        // Aqui você precisaria validar a senha atual no backend
-        // Como não temos esse endpoint específico, vamos simular
-
-        const dadosAtualizados = {
-            senha: novaSenha
-        };
-
-        fetch('/api/cliente/atualizar', {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                [header]: token
-            },
-            body: JSON.stringify(dadosAtualizados)
+            return fetch('/api/cliente/atualizar', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(dadosAtualizados)
+            });
         })
         .then(response => {
+            console.log('Response status alterarSenha:', response.status);
             if (!response.ok) {
-                return response.json().then(err => { throw new Error(err) });
+                return response.text().then(text => {
+                    console.log('Error response text:', text);
+                    try {
+                        const errorData = JSON.parse(text);
+                        throw new Error(errorData.message || 'Erro desconhecido');
+                    } catch (e) {
+                        throw new Error('Erro ao processar resposta: ' + text);
+                    }
+                });
             }
             return response.json();
         })
@@ -517,75 +588,101 @@
         })
         .catch(error => {
             console.error('Erro ao alterar senha:', error);
-            mostrarErro('Erro ao alterar sua senha. Por favor, tente novamente.');
-        });
-    }
-
-    // Buscar CEP usando a API ViaCEP
-    function buscarCep() {
-        const cep = document.getElementById('cep').value.replace(/\D/g, '');
-
-        if (cep.length !== 8) {
-            return;
-        }
-
-        fetch(`https://viacep.com.br/ws/${cep}/json/`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.erro) {
-                    mostrarErro('CEP não encontrado.');
-                    return;
+            try {
+                if (error.message) {
+                    mostrarErro(error.message);
+                } else {
+                    mostrarErro('Erro ao alterar sua senha. Por favor, tente novamente.');
                 }
+            } catch (e) {
+                mostrarErro('Erro ao alterar sua senha. Por favor, tente novamente.');
+            }
+        });
+}
 
-                document.getElementById('logradouro').value = data.logradouro;
-                document.getElementById('bairro').value = data.bairro;
-                document.getElementById('cidade').value = data.localidade;
-                document.getElementById('uf').value = data.uf;
-                document.getElementById('numero').focus();
-            })
-            .catch(error => {
-                console.error('Erro ao buscar CEP:', error);
-                mostrarErro('Erro ao buscar o CEP. Por favor, tente novamente.');
-            });
+// Buscar CEP usando a API ViaCEP
+function buscarCep() {
+    const cep = document.getElementById('cep').value.replace(/\D/g, '');
+
+    if (cep.length !== 8) {
+        return;
     }
 
-    // Salvar novo endereço
-    function salvarNovoEndereco() {
-        const form = document.getElementById('formNovoEndereco');
+    fetch(`https://viacep.com.br/ws/${cep}/json/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.erro) {
+                mostrarErro('CEP não encontrado.');
+                return;
+            }
 
-        if (!form.checkValidity()) {
-            form.reportValidity();
-            return;
-        }
+            document.getElementById('logradouro').value = data.logradouro;
+            document.getElementById('bairro').value = data.bairro;
+            document.getElementById('cidade').value = data.localidade;
+            document.getElementById('uf').value = data.uf;
+            document.getElementById('numero').focus();
+        })
+        .catch(error => {
+            console.error('Erro ao buscar CEP:', error);
+            mostrarErro('Erro ao buscar o CEP. Por favor, tente novamente.');
+        });
+}
 
-        const cep = document.getElementById('cep').value;
-        const logradouro = document.getElementById('logradouro').value;
-        const numero = document.getElementById('numero').value;
-        const complemento = document.getElementById('complemento').value;
-        const bairro = document.getElementById('bairro').value;
-        const cidade = document.getElementById('cidade').value;
-        const uf = document.getElementById('uf').value;
-        const padrao = document.getElementById('enderecoPadrao').checked;
+// Salvar novo endereço
+function salvarNovoEndereco() {
+    const form = document.getElementById('formNovoEndereco');
 
-        // Formatar o endereço como string
-        const enderecoCompleto = `${logradouro}, ${numero}${complemento ? `, ${complemento}` : ''} - ${bairro} - ${cidade}/${uf} - CEP: ${cep}`;
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
 
-        const enderecoDTO = {
-            endereco: enderecoCompleto,
-            padrao: padrao
-        };
+    // Verificar autenticação antes de fazer a requisição
+    fetch('/api/cliente/auth/status')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.autenticado) {
+                window.location.href = '/loja/login-cliente';
+                throw new Error('Sessão expirada');
+            }
 
-        fetch('/api/cliente/endereco', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                [header]: token
-            },
-            body: JSON.stringify(enderecoDTO)
+            const cep = document.getElementById('cep').value;
+            const logradouro = document.getElementById('logradouro').value;
+            const numero = document.getElementById('numero').value;
+            const complemento = document.getElementById('complemento').value;
+            const bairro = document.getElementById('bairro').value;
+            const cidade = document.getElementById('cidade').value;
+            const uf = document.getElementById('uf').value;
+            const padrao = document.getElementById('enderecoPadrao').checked;
+
+            // Formatar o endereço como string
+            const enderecoCompleto = `${logradouro}, ${numero}${complemento ? `, ${complemento}` : ''} - ${bairro} - ${cidade}/${uf} - CEP: ${cep}`;
+
+            const enderecoDTO = {
+                endereco: enderecoCompleto,
+                padrao: padrao
+            };
+
+            return fetch('/api/cliente/endereco', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(enderecoDTO)
+            });
         })
         .then(response => {
+            console.log('Response status salvarNovoEndereco:', response.status);
             if (!response.ok) {
-                return response.json().then(err => { throw new Error(err) });
+                return response.text().then(text => {
+                    console.log('Error response text:', text);
+                    try {
+                        const errorData = JSON.parse(text);
+                        throw new Error(errorData.message || 'Erro desconhecido');
+                    } catch (e) {
+                        throw new Error('Erro ao processar resposta: ' + text);
+                    }
+                });
             }
             return response.json();
         })
@@ -594,44 +691,71 @@
             form.reset();
 
             // Se marcado como padrão, moverá para a primeira posição na lista
-            if (padrao && data.enderecosEntrega && data.enderecosEntrega.length > 0) {
-                definirEnderecoPadrao(data.enderecosEntrega.length - 1);
-            } else {
+            if (data.enderecosEntrega && data.enderecosEntrega.length > 0) {
                 renderizarEnderecos(data.enderecosEntrega);
+                if (data.padrao) {
+                    definirEnderecoPadrao(data.enderecosEntrega.length - 1);
+                }
             }
 
             mostrarSucesso('Endereço adicionado com sucesso!');
         })
         .catch(error => {
             console.error('Erro ao adicionar endereço:', error);
-            mostrarErro('Erro ao adicionar endereço. Por favor, tente novamente.');
-        });
-    }
-
-    // Confirmar remoção de endereço
-    function confirmarRemoverEndereco(index) {
-        document.getElementById('mensagemConfirmacao').textContent = 'Tem certeza que deseja remover este endereço?';
-
-        document.getElementById('btnConfirmar').onclick = function() {
-            removerEndereco(index);
-            modalConfirmacao.hide();
-        };
-
-        modalConfirmacao.show();
-    }
-
-    // Remover endereço
-    function removerEndereco(index) {
-        fetch(`/api/cliente/endereco/${index}`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                [header]: token
+            try {
+                if (error.message) {
+                    mostrarErro(error.message);
+                } else {
+                    mostrarErro('Erro ao adicionar endereço. Por favor, tente novamente.');
+                }
+            } catch (e) {
+                mostrarErro('Erro ao adicionar endereço. Por favor, tente novamente.');
             }
+        });
+}
+
+// Confirmar remoção de endereço
+function confirmarRemoverEndereco(index) {
+    document.getElementById('mensagemConfirmacao').textContent = 'Tem certeza que deseja remover este endereço?';
+
+    document.getElementById('btnConfirmar').onclick = function() {
+        removerEndereco(index);
+        modalConfirmacao.hide();
+    };
+
+    modalConfirmacao.show();
+}
+
+// Remover endereço
+function removerEndereco(index) {
+    // Verificar autenticação antes de fazer a requisição
+    fetch('/api/cliente/auth/status')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.autenticado) {
+                window.location.href = '/loja/login-cliente';
+                throw new Error('Sessão expirada');
+            }
+
+            return fetch(`/api/cliente/endereco/${index}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
         })
         .then(response => {
+            console.log('Response status removerEndereco:', response.status);
             if (!response.ok) {
-                return response.json().then(err => { throw new Error(err) });
+                return response.text().then(text => {
+                    console.log('Error response text:', text);
+                    try {
+                        const errorData = JSON.parse(text);
+                        throw new Error(errorData.message || 'Erro desconhecido');
+                    } catch (e) {
+                        throw new Error('Erro ao processar resposta: ' + text);
+                    }
+                });
             }
             return response.json();
         })
@@ -641,22 +765,48 @@
         })
         .catch(error => {
             console.error('Erro ao remover endereço:', error);
-            mostrarErro('Erro ao remover endereço. Por favor, tente novamente.');
-        });
-    }
-
-    // Definir endereço como padrão
-    function definirEnderecoPadrao(index) {
-        fetch(`/api/cliente/endereco/${index}/padrao`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                [header]: token
+            try {
+                if (error.message) {
+                    mostrarErro(error.message);
+                } else {
+                    mostrarErro('Erro ao remover endereço. Por favor, tente novamente.');
+                }
+            } catch (e) {
+                mostrarErro('Erro ao remover endereço. Por favor, tente novamente.');
             }
+        });
+}
+
+// Definir endereço como padrão
+function definirEnderecoPadrao(index) {
+    // Verificar autenticação antes de fazer a requisição
+    fetch('/api/cliente/auth/status')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.autenticado) {
+                window.location.href = '/loja/login-cliente';
+                throw new Error('Sessão expirada');
+            }
+
+            return fetch(`/api/cliente/endereco/${index}/padrao`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
         })
         .then(response => {
+            console.log('Response status definirEnderecoPadrao:', response.status);
             if (!response.ok) {
-                return response.json().then(err => { throw new Error(err) });
+                return response.text().then(text => {
+                    console.log('Error response text:', text);
+                    try {
+                        const errorData = JSON.parse(text);
+                        throw new Error(errorData.message || 'Erro desconhecido');
+                    } catch (e) {
+                        throw new Error('Erro ao processar resposta: ' + text);
+                    }
+                });
             }
             return response.json();
         })
@@ -666,20 +816,38 @@
         })
         .catch(error => {
             console.error('Erro ao definir endereço padrão:', error);
-            mostrarErro('Erro ao definir endereço padrão. Por favor, tente novamente.');
+            try {
+                if (error.message) {
+                    mostrarErro(error.message);
+                } else {
+                    mostrarErro('Erro ao definir endereço padrão. Por favor, tente novamente.');
+                }
+            } catch (e) {
+                mostrarErro('Erro ao definir endereço padrão. Por favor, tente novamente.');
+            }
         });
-    }
-    function fazerLogout() {
+}
+
+// Fazer logout
+function fazerLogout() {
     fetch('/api/cliente/auth/logout', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            [header]: token
+            'Content-Type': 'application/json'
         }
     })
     .then(response => {
+        console.log('Response status fazerLogout:', response.status);
         if (!response.ok) {
-            return response.json().then(err => { throw new Error(err) });
+            return response.text().then(text => {
+                console.log('Error response text:', text);
+                try {
+                    const errorData = JSON.parse(text);
+                    throw new Error(errorData.message || 'Erro desconhecido');
+                } catch (e) {
+                    throw new Error('Erro ao processar resposta: ' + text);
+                }
+            });
         }
         return response.json();
     })
@@ -689,7 +857,17 @@
     })
     .catch(error => {
         console.error('Erro ao fazer logout:', error);
-        alert('Erro ao fazer logout. Por favor, tente novamente.');
+        try {
+            if (error.message) {
+                alert(error.message);
+            } else {
+                alert('Erro ao fazer logout. Por favor, tente novamente.');
+            }
+        } catch (e) {
+            alert('Erro ao fazer logout. Por favor, tente novamente.');
+        }
+        // Tentar redirecionar mesmo com erro
+        window.location.href = '/loja';
     });
 }
 </script>
