@@ -1,0 +1,68 @@
+:root {
+  --mc-red:    #DA291C;
+  --mc-yellow: #FFC72C;
+}
+
+/* Navbar */
+.bg-mc-red {
+  background-color: var(--mc-red) !important;
+}
+.navbar-brand,
+.navbar-dark .btn-outline-light {
+  color: var(--mc-yellow) !important;
+}
+.btn-mc-yellow {
+  background-color: var(--mc-yellow);
+  color: var(--mc-red);
+}
+.btn-mc-yellow:hover {
+  background-color: #e6b800;
+  color: var(--mc-red);
+}
+.navbar .badge {
+  font-size: 0.65rem;
+}
+
+/* Cards */
+.card-header {
+  background-color: var(--mc-red);
+  color: var(--mc-yellow);
+}
+.card {
+  border-radius: .375rem;
+}
+
+/* Botões */
+.btn-primary {
+  background-color: var(--mc-red);
+  border-color: var(--mc-red);
+}
+.btn-primary:hover {
+  background-color: #bb0010;
+  border-color: #bb0010;
+}
+.btn-outline-primary {
+  color: var(--mc-red);
+  border-color: var(--mc-red);
+}
+.btn-outline-primary:hover {
+  background-color: var(--mc-red);
+  color: var(--mc-yellow);
+}
+
+/* Títulos */
+h2 {
+  color: var(--mc-red);
+  font-weight: bold;
+}
+h5 {
+  font-weight: bold;
+}
+
+/* Tabela de resumo */
+.table thead th {
+  border-bottom: 2px solid var(--mc-red);
+}
+.table tbody td {
+  vertical-align: middle;
+}

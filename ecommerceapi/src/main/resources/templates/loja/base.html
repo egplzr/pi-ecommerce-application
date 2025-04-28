@@ -24,23 +24,21 @@
                     Mc Donalds
                 </a>
             </h1>
-            <!-- Formulário de Busca -->
-
             <!-- Ícones de Usuário e Carrinho -->
-            <div class="text-end">
-                <div class="dropdown d-inline-block me-2">
-                    <button class="btn btn-outline-light dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-person-fill me-1"></i> <span id="loginText">Minha Conta</span>
-                    </button>
-                    <ul class="dropdown-menu" aria-labelledby="userMenu">
-                        <li id="loginOption"><a class="dropdown-item" href="/loja/login-cliente">Login</a></li>
-                        <li id="perfilOption" style="display: none;"><a class="dropdown-item" href="/loja/perfil">Meu Perfil</a></li>
-                        <li id="divider" style="display: none;"><hr class="dropdown-divider"></li>
-                        <li id="logoutOption" style="display: none;"><a class="dropdown-item" href="#" onclick="fazerLogout(); return false;">Sair</a></li>
-                    </ul>
+            <div class="text-end d-flex align-items-center">
+                <!-- User menu: select when logged in, login button otherwise -->
+                <div class="me-3 d-inline-block">
+                    <!-- Se estiver logado, mostra select -->
+                    <select id="userSelect" class="form-select form-select-sm" th:if="${cliente != null}" onchange="handleUserSelect()">
+                        <option value="" disabled selected th:text="'Olá, ' + ${cliente.nome}">Olá, Cliente</option>
+                        <option value="perfil">Meu Perfil</option>
+                        <option value="logout">Sair</option>
+                    </select>
+                    <!-- Se não estiver logado, mostra link de Login -->
+                    <a th:if="${cliente == null}" class="btn btn-outline-light btn-sm" th:href="@{/loja/login-cliente}">
+                        <i class="bi bi-person-fill me-1"></i> Login
+                    </a>
                 </div>
-
-
                 <a href="/loja/carrinho" class="btn btn-warning">
                     <i class="bi bi-cart-fill me-1"></i> Carrinho
                     <span class="badge bg-dark ms-1" id="cartItemCount">0</span>
@@ -50,25 +48,18 @@
     </div>
 </header>
 
-<!-- Navegação por Categorias (Opcional) -->
+<!-- Navegação por Categorias -->
 <div class="bg-light py-2">
     <div class="container">
-        <div class="row">
-            <div class="col-12">
-                <nav class="nav">
-                    <a class="nav-link text-dark" href="/loja">Todos os Produtos</a>
-                    <!-- Adicionar categorias dinamicamente no futuro -->
-                </nav>
-            </div>
-        </div>
+        <nav class="nav">
+            <a th:href="@{/loja}" class="nav-link text-dark" th:classappend="${#request.requestURI == '/loja'} ? 'active' : ''">Todos os Produtos</a>
+        </nav>
     </div>
 </div>
 
-<!-- Conteúdo Principal - Substituído em cada página -->
+<!-- Conteúdo Principal -->
 <main class="container py-4">
-    <div th:replace="${content}">
-        <!-- Conteúdo será substituído -->
-    </div>
+    <div th:replace="${content}"></div>
 </main>
 
 <!-- Footer -->
@@ -79,7 +70,6 @@
                 <h5>E-commerce</h5>
                 <p class="text-muted">Seu destino para compras online.</p>
             </div>
-
             <div class="col-md-4 mb-3">
                 <h5>Links Úteis</h5>
                 <ul class="list-unstyled">
@@ -89,7 +79,6 @@
                     <li><a href="#" class="text-decoration-none text-muted">Política de Privacidade</a></li>
                 </ul>
             </div>
-
             <div class="col-md-4">
                 <h5>Contato</h5>
                 <ul class="list-unstyled text-muted">
@@ -99,9 +88,7 @@
                 </ul>
             </div>
         </div>
-
         <hr>
-
         <div class="text-center">
             <p class="mb-0">&copy; 2025 E-commerce. Todos os direitos reservados.</p>
         </div>
@@ -111,68 +98,27 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/static/js/csrf-token.js"></script>
 <script src="/static/js/loja.js"></script>
-<!-- Bloco para scripts adicionais -->
+
+<!-- Scripts adicionais -->
 <th:block th:replace="${scripts}"></th:block>
 
 <script>
-    // Função para fazer logout (adicionada ao final do arquivo)
     function fazerLogout() {
         const token = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
         const header = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
-
         fetch('/api/cliente/auth/logout', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                [header]: token
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Redirecionar para a página inicial após logout
-            window.location.href = '/loja';
-        })
-        .catch(error => {
-            console.error('Erro ao fazer logout:', error);
-            // Redirecionar mesmo se houver erro
-            window.location.href = '/loja';
-        });
+            method: 'POST', headers: {'Content-Type':'application/json', [header]: token}
+        }).finally(() => window.location.href = '/loja');
     }
-
-    // Verificar status de autenticação para mostrar/ocultar opções adequadas
-    function verificarAutenticacao() {
-        fetch('/api/cliente/auth/status')
-            .then(response => response.json())
-            .then(data => {
-                const dropdown = document.querySelector('.dropdown-menu');
-                if (dropdown) {
-                    // Se autenticado, oculta login e mostra perfil/logout
-                    // Se não autenticado, mostra login e oculta perfil/logout
-                    const loginItem = dropdown.querySelector('a[href="/loja/login-cliente"]').parentNode;
-                    const perfilItem = dropdown.querySelector('a[href="/loja/perfil"]').parentNode;
-                    const divider = dropdown.querySelector('hr').parentNode;
-                    const logoutItem = divider.nextElementSibling;
-
-                    if (data.autenticado) {
-                        loginItem.style.display = 'none';
-                        perfilItem.style.display = 'block';
-                        divider.style.display = 'block';
-                        logoutItem.style.display = 'block';
-                    } else {
-                        loginItem.style.display = 'block';
-                        perfilItem.style.display = 'none';
-                        divider.style.display = 'none';
-                        logoutItem.style.display = 'none';
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Erro ao verificar autenticação:', error);
-            });
+    function handleUserSelect() {
+        const sel = document.getElementById('userSelect');
+        if (sel.value === 'perfil') window.location.href = '/loja/perfil';
+        if (sel.value === 'logout') fazerLogout();
+        sel.selectedIndex = 0;
     }
-
-    // Verificar autenticação ao carregar a página
-    document.addEventListener('DOMContentLoaded', verificarAutenticacao);
+    document.addEventListener('DOMContentLoaded', () => {
+        // Exemplo: atualizar contador do carrinho
+    });
 </script>
 </body>
 </html>

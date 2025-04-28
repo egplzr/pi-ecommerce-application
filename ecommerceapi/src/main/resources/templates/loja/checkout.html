@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout - Mc Donalds</title>
+
+  <!-- Bootstrap CSS -->
+  <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+  >
+  <!-- Bootstrap Icons -->
+  <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+          rel="stylesheet"
+  >
+  <!-- Seu CSS customizado -->
+  <link rel="stylesheet" th:href="@{/css/checkout.css}">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-mc-red">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <i class="bi bi-m"></i> McDonalds
+    </a>
+    <div class="ms-auto d-flex align-items-center">
+      <a href="/loja/login-cliente" class="btn btn-outline-light btn-sm me-3">
+        <i class="bi bi-person"></i> Login
+      </a>
+      <a href="/loja/carrinho" class="btn btn-mc-yellow btn-sm position-relative">
+        <i class="bi bi-cart"></i> Carrinho
+        <span class="badge bg-mc-red position-absolute top-0 start-100 translate-middle">2</span>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<div th:fragment="content">
+  <div class="container py-4">
+    <h2 class="mb-4 text-center">Checkout</h2>
+    <div class="row">
+      <!-- Etapa 1: seleção de endereço -->
+      <div id="passo-enderecos" class="col-12 col-lg-4 mb-4">
+        <div class="card h-100">
+          <div class="card-header">
+            <h5 class="mb-0">1. Endereço de Entrega</h5>
+          </div>
+          <div class="card-body overflow-auto" style="max-height:400px">
+            <div id="listaEnderecos" class="d-flex flex-column gap-2"></div>
+            <button class="btn btn-outline-primary mt-3" onclick="abrirModalNovoEndereco()">
+              + Adicionar novo
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Etapa 2: forma de pagamento -->
+      <div id="passo-pagamento" class="col-12 col-lg-4 mb-4" style="display:none">
+        <div class="card h-100">
+          <div class="card-header">
+            <h5 class="mb-0">2. Forma de Pagamento</h5>
+          </div>
+          <div class="card-body">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="pagamento" id="pagBoleto" value="BOLETO">
+              <label class="form-check-label" for="pagBoleto">Boleto</label>
+            </div>
+            <div class="form-check mt-2">
+              <input class="form-check-input" type="radio" name="pagamento" id="pagCartao" value="CARTAO">
+              <label class="form-check-label" for="pagCartao">Cartão de Crédito</label>
+            </div>
+            <div id="dadosCartao" class="mt-3" style="display:none">
+              <div class="mb-2"><input type="text" class="form-control" placeholder="Número do Cartão"></div>
+              <div class="row">
+                <div class="col-6 mb-2"><input type="text" class="form-control" placeholder="MM/AA"></div>
+                <div class="col-6 mb-2"><input type="text" class="form-control" placeholder="CVV"></div>
+              </div>
+              <div class="mb-2"><input type="text" class="form-control" placeholder="Nome no Cartão"></div>
+              <div class="mb-2"><input type="number" class="form-control" placeholder="Parcelas"></div>
+            </div>
+            <button
+                    class="btn btn-primary mt-3 w-100"
+                    onclick="prosseguirPagamento()"
+            >
+              Próximo
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Etapa 3: resumo do pedido -->
+      <div id="passo-resumo" class="col-12 col-lg-4 mb-4" style="display:none">
+        <div class="card h-100">
+          <div class="card-header">
+            <h5 class="mb-0">3. Resumo do Pedido</h5>
+          </div>
+          <div class="card-body">
+            <div id="resumoItens" class="table-responsive mb-3"></div>
+            <p><strong>Endereço:</strong> <span id="resumoEndereco"></span></p>
+            <p><strong>Pagamento:</strong> <span id="resumoPagamento"></span></p>
+            <p><strong>Total:</strong> R$ <span id="resumoTotal"></span></p>
+            <button class="btn btn-success w-100 mt-2" onclick="confirmarPedido()">Confirmar Compra</button>
+            <button class="btn btn-link w-100 mt-1" onclick="voltarAoPagamento()">Voltar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Novo Endereço -->
+    <div
+            class="modal fade"
+            id="modalNovoEndereco"
+            tabindex="-1"
+            aria-labelledby="modalNovoEnderecoLabel"
+            aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalNovoEnderecoLabel">Novo Endereço</h5>
+            <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Fechar"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="formNovoEndereco">
+              <div class="mb-3">
+                <label for="cepNovo" class="form-label">CEP</label>
+                <input type="text" class="form-control" id="cepNovo" placeholder="00000-000" required>
+              </div>
+              <div class="mb-3">
+                <label for="logradouroNovo" class="form-label">Logradouro</label>
+                <input type="text" class="form-control" id="logradouroNovo" required>
+              </div>
+              <div class="row mb-3">
+                <div class="col-4">
+                  <label for="numeroNovo" class="form-label">Número</label>
+                  <input type="text" class="form-control" id="numeroNovo" required>
+                </div>
+                <div class="col-8">
+                  <label for="complementoNovo" class="form-label">Complemento</label>
+                  <input type="text" class="form-control" id="complementoNovo">
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="bairroNovo" class="form-label">Bairro</label>
+                <input type="text" class="form-control" id="bairroNovo" required>
+              </div>
+              <div class="row mb-3">
+                <div class="col-8">
+                  <label for="cidadeNovo" class="form-label">Cidade</label>
+                  <input type="text" class="form-control" id="cidadeNovo" required>
+                </div>
+                <div class="col-4">
+                  <label for="ufNovo" class="form-label">UF</label>
+                  <input type="text" class="form-control" id="ufNovo" maxlength="2" required>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              Cancelar
+            </button>
+            <button
+                    type="button"
+                    class="btn btn-primary"
+                    onclick="salvarNovoEndereco()"
+            >
+              Salvar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Bootstrap JS Bundle (inclui Popper) -->
+<script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+></script>
+
+<!-- Seu script de checkout -->
+<script>
+  let enderecoSelecionado, formaPagamento, carrinho;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    carrinho = JSON.parse(localStorage.getItem('cart')) || [];
+    carregarEnderecos();
+    montarResumoItens();
+    document.getElementById('pagCartao').addEventListener('change', () => document.getElementById('dadosCartao').style.display='block');
+    document.getElementById('pagBoleto').addEventListener('change', () => document.getElementById('dadosCartao').style.display='none');
+
+    // CEP lookup
+    document.getElementById('cepNovo').addEventListener('blur', function() {
+      const cep = this.value.replace(/\D/g,'');
+      if (cep.length === 8) {
+        fetch(`https://viacep.com.br/ws/${cep}/json/`)
+          .then(r => r.json())
+          .then(data => {
+            if (!data.erro) {
+              document.getElementById('logradouroNovo').value = data.logradouro;
+              document.getElementById('bairroNovo').value = data.bairro;
+              document.getElementById('cidadeNovo').value = data.localidade;
+              document.getElementById('ufNovo').value = data.uf;
+            } else {
+              alert('CEP não encontrado');
+            }
+          })
+          .catch(() => alert('Erro ao buscar CEP'));
+      }
+    });
+  });
+
+  function carregarEnderecos() {
+    fetch('/api/cliente/perfil')
+      .then(r => r.json())
+      .then(cliente => {
+        const lista = document.getElementById('listaEnderecos');
+        lista.innerHTML = '';
+        cliente.enderecosEntrega.forEach(e => {
+          const btn = document.createElement('button');
+          btn.className = 'btn btn-outline-secondary mb-2';
+          btn.textContent = e;
+          btn.addEventListener('click', () => {
+            enderecoSelecionado = e;
+            document.getElementById('passo-enderecos').style.display = 'none';
+            document.getElementById('passo-pagamento').style.display = 'block';
+          });
+          lista.appendChild(btn);
+        });
+      });
+  }
+
+  function prosseguirPagamento() {
+    const sel = document.querySelector('input[name=pagamento]:checked');
+    if (!sel) return alert('Selecione forma de pagamento');
+    formaPagamento = sel.value;
+    document.getElementById('passo-pagamento').style.display = 'none';
+    document.getElementById('passo-resumo').style.display = 'block';
+    document.getElementById('resumoEndereco').textContent = enderecoSelecionado;
+    document.getElementById('resumoPagamento').textContent = formaPagamento;
+  }
+
+  function montarResumoItens() {
+    let html = '<table class="table"><thead><tr><th>Produto</th><th>Qtd</th><th>Subtotal</th></tr></thead><tbody>';
+    let total = 0;
+    carrinho.forEach(i => {
+      const sub = i.preco * i.quantidade;
+      total += sub;
+      html += `<tr><td>${i.nome}</td><td>${i.quantidade}</td><td>R$ ${sub.toFixed(2)}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('resumoItens').innerHTML = html;
+    document.getElementById('resumoTotal').textContent = total.toFixed(2);
+  }
+
+  function confirmarPedido() {
+    const payload = { itens: carrinho, endereco: enderecoSelecionado, pagamento: formaPagamento };
+    fetch('/api/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(resp => {
+      window.location.href = '/loja/confirmacao?numero=' + resp.numeroPedido;
+    });
+  }
+
+  function voltarAoPagamento() {
+    document.getElementById('passo-resumo').style.display = 'none';
+    document.getElementById('passo-pagamento').style.display = 'block';
+  }
+
+  function abrirModalNovoEndereco() {
+    new bootstrap.Modal(document.getElementById('modalNovoEndereco')).show();
+  }
+
+  function salvarNovoEndereco() {
+    if (!document.getElementById('formNovoEndereco').reportValidity()) return;
+    const endereco = [
+      document.getElementById('logradouroNovo').value,
+      document.getElementById('numeroNovo').value,
+      document.getElementById('complementoNovo').value,
+      document.getElementById('bairroNovo').value,
+      document.getElementById('cidadeNovo').value,
+      document.getElementById('ufNovo').value,
+      document.getElementById('cepNovo').value
+    ].filter(Boolean).join(', ');
+    const lista = document.getElementById('listaEnderecos');
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-outline-secondary mb-2';
+    btn.textContent = endereco;
+    btn.addEventListener('click', () => {
+      enderecoSelecionado = endereco;
+      document.getElementById('passo-enderecos').style.display = 'none';
+      document.getElementById('passo-pagamento').style.display = 'block';
+    });
+    lista.appendChild(btn);
+    bootstrap.Modal.getInstance(document.getElementById('modalNovoEndereco')).hide();
+    document.getElementById('formNovoEndereco').reset();
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="content">
+  <h2>Meus Pedidos</h2>
+  <table class="table">
+    <thead><tr>
+      <th># Pedido</th><th>Data</th><th>Total</th><th>Status</th><th>Ações</th>
+    </tr></thead>
+    <tbody id="listaPedidos"></tbody>
+  </table>
+</div>
+
+<div th:fragment="scripts">
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      fetch('/api/cliente/pedidos')
+        .then(r => r.json())
+        .then(pedidos => {
+          const tbody = document.getElementById('listaPedidos');
+          pedidos.forEach(p => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${p.numero}</td>
+              <td>${new Date(p.data).toLocaleDateString()}</td>
+              <td>R$ ${p.total.toFixed(2)}</td>
+              <td>${p.status}</td>
+              <td>
+                <a href="/loja/pedidos/${p.numero}" class="btn btn-sm btn-primary">Detalhes</a>
+              </td>`;
+            tbody.appendChild(tr);
+          });
+        });
+    });
+  </script>
+</div>
+</html>

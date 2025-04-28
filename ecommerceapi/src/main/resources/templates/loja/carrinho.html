@@ -9,13 +9,12 @@
     <link rel="stylesheet" href="/static/css/loja.css">
 </head>
 <body>
-<!-- Cabeçalho com padrão Mc Donalds -->
 <header class="p-3 rounded mb-4" style="background-color: #DA291C;">
     <div class="container">
         <div class="d-flex justify-content-between align-items-center">
             <h1 style="color: #FFC72C;">
                 <a href="/loja" style="color: inherit; text-decoration: none;">
-                    <img src="/static/images/m-mcdonalds-removebg-preview.png" alt="Logo Mc Donalds" style="width:40px; height:auto; vertical-align: middle;" class="me-2">
+                    <img src="/static/images/m-mcdonalds-removebg-preview.png" alt="Logo Mc Donalds" class="me-2" style="width:40px; vertical-align: middle;">
                     Mc Donalds
                 </a>
             </h1>
@@ -32,13 +31,11 @@
     </div>
 </header>
 
-<!-- Conteúdo principal -->
 <main class="container py-4">
     <h1 class="mb-4">Carrinho de Compras</h1>
     <div id="cartContainer"></div>
 </main>
 
-<!-- Rodapé -->
 <footer class="bg-dark text-white py-4 mt-5">
     <div class="container">
         <div class="row">
@@ -55,217 +52,141 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Variável global para armazenar o subtotal dos produtos
     let currentSubtotal = 0;
 
-    // Função auxiliar para obter o identificador do produto
     function getProdutoId(item) {
-      return item.produtoId || item.id;
+        return item.produtoId || item.id;
     }
 
-    // Função para renderizar o carrinho usando a chave "cart" do localStorage
     function renderCart() {
-      const cartContainer = document.getElementById('cartContainer');
-      const cart = JSON.parse(localStorage.getItem('cart')) || [];
-
-      if (cart.length === 0) {
-        cartContainer.innerHTML = `
-          <div class="alert alert-info">
-            <i class="bi bi-cart-x me-2"></i> Seu carrinho está vazio.
-            <a href="/loja" class="alert-link">Clique aqui</a> para continuar comprando.
-          </div>
-        `;
-        updateCartCount();
-        return;
-      }
-
-      let tableRows = '';
-      let subtotal = 0;
-      cart.forEach(item => {
-        // Obtém o identificador, nome, preço e imagem com valores padrões se ausentes
-        const pid = getProdutoId(item);
-        const nome = item.nome || "Produto Sem Nome";
-        const preco = parseFloat(item.preco) || 0;
-        const quantidade = parseInt(item.quantidade) || 0;
-        const imagemUrl = item.imagemUrl || '/static/images/produto-sem-imagem.jpg';
-
-        const itemSubtotal = preco * quantidade;
-        subtotal += itemSubtotal;
-        tableRows += `
-          <tr>
-            <td>
-              <div class="d-flex align-items-center">
-                <img src="${imagemUrl}" alt="${nome}" style="width: 50px; height: 50px; object-fit: contain;" class="me-3">
-                <div>
-                  <h6 class="mb-0">${nome}</h6>
-                </div>
-              </div>
-            </td>
-            <td>R$ ${preco.toFixed(2)}</td>
-            <td>
-              <div class="input-group input-group-sm" style="width: 120px;">
-                <button class="btn btn-outline-secondary" onclick="updateQuantity('${pid}', ${quantidade - 1})">
-                  <i class="bi bi-dash"></i>
-                </button>
-                <input type="number" class="form-control text-center" value="${quantidade}" min="1" onchange="updateQuantity('${pid}', this.value)">
-                <button class="btn btn-outline-secondary" onclick="updateQuantity('${pid}', ${quantidade + 1})">
-                  <i class="bi bi-plus"></i>
-                </button>
-              </div>
-            </td>
-            <td>R$ ${itemSubtotal.toFixed(2)}</td>
-            <td>
-              <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart('${pid}')">
-                <i class="bi bi-trash"></i>
-              </button>
-            </td>
-          </tr>
-        `;
-      });
-
-      // Atualiza a variável global com o subtotal atual
-      currentSubtotal = subtotal;
-
-      cartContainer.innerHTML = `
-        <div class="row">
-          <div class="col-lg-8">
-            <div class="card mb-4">
-              <div class="card-header">
-                <h5 class="mb-0">Produtos</h5>
-              </div>
-              <div class="card-body p-0">
-                <div class="table-responsive">
-                  <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                      <tr>
-                        <th>Produto</th>
-                        <th>Preço</th>
-                        <th>Quantidade</th>
-                        <th>Subtotal</th>
-                        <th>Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${tableRows}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              <div class="card-footer text-end">
-                <button class="btn btn-outline-danger" onclick="clearCart()">
-                  <i class="bi bi-trash me-2"></i>Limpar Carrinho
-                </button>
-                <a href="/loja" class="btn btn-outline-primary">
-                  <i class="bi bi-cart-plus me-2"></i>Continuar Comprando
-                </a>
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-4">
-            <div class="card mb-4">
-              <div class="card-header">
-                <h5 class="mb-0">Resumo do Pedido</h5>
-              </div>
-              <div class="card-body">
-                <!-- Campo para informar o CEP -->
-                <div class="mb-3">
-                  <label for="cepInput" class="form-label">Digite seu CEP</label>
-                  <input type="text" id="cepInput" class="form-control" placeholder="00000-000">
-                </div>
-                <!-- Opções de frete -->
-                <div class="mb-3">
-                  <label for="shippingOption" class="form-label">Escolha o frete</label>
-                  <select id="shippingOption" class="form-select" onchange="updateShipping()">
-                    <option value="0" selected>Selecionar</option>
-                    <option value="10">R$ 10.00 - PAC</option>
-                    <option value="15">R$ 15.00 - Express</option>
-                    <option value="20">R$ 20.00 - Prioritário</option>
-                  </select>
-                </div>
-                <!-- Exibe o subtotal e o frete escolhido -->
-                <div class="d-flex justify-content-between mb-3">
-                  <span>Subtotal</span>
-                  <span id="subtotalDisplay">R$ ${subtotal.toFixed(2)}</span>
-                </div>
-                <div class="d-flex justify-content-between mb-3">
-                  <span>Frete</span>
-                  <span id="freteDisplay">R$ 0.00</span>
-                </div>
-                <hr>
-                <div class="d-flex justify-content-between fw-bold">
-                  <span>Total</span>
-                  <span id="totalDisplay">R$ ${subtotal.toFixed(2)}</span>
-                </div>
-              </div>
-              <div class="card-footer">
-                <button class="btn btn-primary w-100" onclick="finalizePurchase()">
-                  <i class="bi bi-credit-card me-2"></i>Finalizar Compra
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-      updateCartCount();
-    }
-
-    // Atualiza o contador de itens no cabeçalho usando a chave "cart"
-    function updateCartCount() {
-      const cart = JSON.parse(localStorage.getItem('cart')) || [];
-      let count = 0;
-      cart.forEach(item => count += parseInt(item.quantidade));
-      document.getElementById('cartItemCount').textContent = count;
-    }
-
-    // Atualiza a quantidade de um item no carrinho usando produtoId
-    function updateQuantity(produtoId, newQuantity) {
-      newQuantity = parseInt(newQuantity);
-      if (newQuantity < 1) newQuantity = 1;
-      let cart = JSON.parse(localStorage.getItem('cart')) || [];
-      // Atualiza os itens usando produtoId
-      cart = cart.map(item => {
-        if ((item.produtoId || item.id) === produtoId) {
-          item.quantidade = newQuantity;
+        const cartContainer = document.getElementById('cartContainer');
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        if (cart.length === 0) {
+            cartContainer.innerHTML = `
+                <div class="alert alert-info">
+                  <i class="bi bi-cart-x me-2"></i> Seu carrinho está vazio.
+                  <a href="/loja" class="alert-link">Clique aqui</a> para continuar comprando.
+                </div>`;
+            updateCartCount();
+            return;
         }
-        return item;
-      });
-      localStorage.setItem('cart', JSON.stringify(cart));
-      renderCart();
+        let tableRows = '';
+        let subtotal = 0;
+        cart.forEach(item => {
+            const pid = getProdutoId(item);
+            const nome = item.nome || 'Produto Sem Nome';
+            const preco = parseFloat(item.preco) || 0;
+            const quantidade = parseInt(item.quantidade) || 0;
+            const imagemUrl = item.imagemUrl || '/static/images/produto-sem-imagem.jpg';
+            const itemSubtotal = preco * quantidade;
+            subtotal += itemSubtotal;
+            tableRows += `
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <img src="${imagemUrl}" alt="${nome}" class="me-3" style="width:50px;height:50px;object-fit:contain;">
+                      <h6 class="mb-0">${nome}</h6>
+                    </div>
+                  </td>
+                  <td>R$ ${preco.toFixed(2)}</td>
+                  <td>
+                    <div class="input-group input-group-sm" style="width:120px;">
+                      <button class="btn btn-outline-secondary" onclick="updateQuantity('${pid}', ${quantidade - 1})"><i class="bi bi-dash"></i></button>
+                      <input type="number" class="form-control text-center" value="${quantidade}" min="1" onchange="updateQuantity('${pid}', this.value)">
+                      <button class="btn btn-outline-secondary" onclick="updateQuantity('${pid}', ${quantidade + 1})"><i class="bi bi-plus"></i></button>
+                    </div>
+                  </td>
+                  <td>R$ ${itemSubtotal.toFixed(2)}</td>
+                  <td><button class="btn btn-sm btn-outline-danger" onclick="removeFromCart('${pid}')"><i class="bi bi-trash"></i></button></td>
+                </tr>`;
+        });
+        currentSubtotal = subtotal;
+        cartContainer.innerHTML = `
+            <div class="row">
+              <div class="col-lg-8">
+                <div class="card mb-4">
+                  <div class="card-header"><h5>Produtos</h5></div>
+                  <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                      <thead><tr><th>Produto</th><th>Preço</th><th>Qtd</th><th>Subtotal</th><th>Ações</th></tr></thead>
+                      <tbody>${tableRows}</tbody>
+                    </table>
+                  </div>
+                  <div class="card-footer text-end">
+                    <button class="btn btn-outline-danger" onclick="clearCart()"><i class="bi bi-trash me-2"></i>Limpar Carrinho</button>
+                    <a href="/loja" class="btn btn-outline-primary"><i class="bi bi-cart-plus me-2"></i>Continuar Comprando</a>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-4">
+                <div class="card mb-4">
+                  <div class="card-header"><h5>Resumo do Pedido</h5></div>
+                  <div class="card-body">
+                    <div class="mb-3">
+                      <label for="cepInput" class="form-label">Digite seu CEP</label>
+                      <input type="text" id="cepInput" class="form-control" placeholder="00000-000">
+                    </div>
+                    <div class="mb-3">
+                      <label for="shippingOption" class="form-label">Escolha o frete</label>
+                      <select id="shippingOption" class="form-select" onchange="updateShipping()">
+                        <option value="0" selected>Selecionar</option>
+                        <option value="10">R$ 10,00 - PAC</option>
+                        <option value="15">R$ 15,00 - Express</option>
+                        <option value="20">R$ 20,00 - Prioritário</option>
+                      </select>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3"><span>Subtotal</span><span id="subtotalDisplay">R$ ${subtotal.toFixed(2)}</span></div>
+                    <div class="d-flex justify-content-between mb-3"><span>Frete</span><span id="freteDisplay">R$ 0.00</span></div>
+                    <hr>
+                    <div class="d-flex justify-content-between fw-bold"><span>Total</span><span id="totalDisplay">R$ ${subtotal.toFixed(2)}</span></div>
+                  </div>
+                  <div class="card-footer">
+                    <button class="btn btn-primary w-100" onclick="finalizarDoCarrinho()"><i class="bi bi-credit-card me-2"></i>Finalizar Compra</button>
+                  </div>
+                </div>
+              </div>
+            </div>`;
+        updateCartCount();
     }
-
-    // Remove um item do carrinho usando produtoId
-    function removeFromCart(produtoId) {
-      let cart = JSON.parse(localStorage.getItem('cart')) || [];
-      cart = cart.filter(item => (item.produtoId || item.id) !== produtoId);
-      localStorage.setItem('cart', JSON.stringify(cart));
-      renderCart();
+    function updateCartCount() {
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        let count = 0;
+        cart.forEach(i => count += parseInt(i.quantidade));
+        document.getElementById('cartItemCount').textContent = count;
     }
-
-    // Limpa todo o carrinho
-    function clearCart() {
-      if (confirm('Tem certeza que deseja limpar o carrinho?')) {
-        localStorage.removeItem('cart');
+    function updateQuantity(produtoId, newQuantity) {
+        newQuantity = Math.max(1, parseInt(newQuantity));
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        cart = cart.map(i => i.produtoId == produtoId || i.id==produtoId ? {...i, quantidade:newQuantity} : i);
+        localStorage.setItem('cart', JSON.stringify(cart));
         renderCart();
-      }
     }
-
-    // Atualiza o valor do frete e o total com base na opção selecionada
+    function removeFromCart(produtoId) {
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        cart = cart.filter(i => i.produtoId != produtoId && i.id!=produtoId);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        renderCart();
+    }
+    function clearCart() {
+        if(confirm('Tem certeza que deseja limpar o carrinho?')){
+            localStorage.removeItem('cart'); renderCart();
+        }
+    }
     function updateShipping() {
-      let shippingCost = parseFloat(document.getElementById('shippingOption').value);
-      if (isNaN(shippingCost)) {
-        shippingCost = 0;
-      }
-      document.getElementById('freteDisplay').textContent = "R$ " + shippingCost.toFixed(2);
-      const total = currentSubtotal + shippingCost;
-      document.getElementById('totalDisplay').textContent = "R$ " + total.toFixed(2);
+        let cost = parseFloat(document.getElementById('shippingOption').value) || 0;
+        document.getElementById('freteDisplay').textContent = 'R$ ' + cost.toFixed(2);
+        document.getElementById('totalDisplay').textContent = 'R$ ' + (currentSubtotal + cost).toFixed(2);
     }
-
-    // Finaliza a compra (funcionalidade futura)
-    function finalizePurchase() {
-      alert('Funcionalidade de finalização de compra será implementada em versões futuras.');
+    function finalizarDoCarrinho() {
+        fetch('/api/cliente/auth/status')
+          .then(r=>r.json())
+          .then(data=>{
+            if(!data.autenticado) window.location.href='/loja/login-cliente';
+            else window.location.href='/loja/checkout';
+          })
+          .catch(()=>window.location.href='/loja/login-cliente');
     }
-
-    window.addEventListener('DOMContentLoaded', renderCart);
+    document.addEventListener('DOMContentLoaded', renderCart);
 </script>
 </body>
 </html>

@@ -51,12 +51,27 @@ public class LojaPageController {
     @GetMapping("/produto/{id}")
     public String paginaDetalhesProduto(@PathVariable Long id, Model model) {
         Produto produto = produtoService.buscarPorId(id);
-
-        // Converter para DTO
-        ProdutoResponseDTO produtoDTO = ProdutoResponseDTO.fromEntity(produto);
-
-        model.addAttribute("produto", produtoDTO);
-
+        ProdutoResponseDTO dto = ProdutoResponseDTO.fromEntity(produto);
+        model.addAttribute("produto", dto);
         return "loja/produto-detalhes";
+    }
+
+    // Pagina de Checkout
+    @GetMapping("/checkout")
+    public String checkoutPage() {
+        return "loja/checkout";
+    }
+
+    // Página de confirmação de pedido
+    @GetMapping("/confirmacao")
+    public String confirmacaoPage(@RequestParam("numero") String numeroPedido, Model model) {
+        model.addAttribute("numeroPedido", numeroPedido);
+        return "loja/confirmacao";
+    }
+
+    // Página de Meus Pedidos
+    @GetMapping("/meus-pedidos")
+    public String meusPedidosPage() {
+        return "loja/meus-pedidos";
     }
 }
