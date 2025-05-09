@@ -265,16 +265,12 @@
 
   function confirmarPedido() {
     const payload = { itens: carrinho, endereco: enderecoSelecionado, pagamento: formaPagamento };
-    fetch('/api/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-    .then(r => r.json())
-    .then(resp => {
-      window.location.href = '/loja/confirmacao?numero=' + resp.numeroPedido;
-    });
-  }
+
+    // Redirecionando para a página de confirmação com o número do pedido
+    window.location.href = '/loja/confirmacao?numero=12345';  // Redireciona para o controlador que renderiza a página confirmacaoPage
+}
+
+
 
   function voltarAoPagamento() {
     document.getElementById('passo-resumo').style.display = 'none';

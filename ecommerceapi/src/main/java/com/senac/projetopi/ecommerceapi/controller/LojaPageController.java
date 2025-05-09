@@ -66,7 +66,7 @@ public class LojaPageController {
     @GetMapping("/confirmacao")
     public String confirmacaoPage(@RequestParam("numero") String numeroPedido, Model model) {
         model.addAttribute("numeroPedido", numeroPedido);
-        return "loja/confirmacao";
+        return "loja/confirmacao";  // Retorna o arquivo confirmacao.html da pasta templates
     }
 
     // Página de Meus Pedidos
@@ -74,4 +74,5 @@ public class LojaPageController {
     public String meusPedidosPage() {
         return "loja/meus-pedidos";
     }
+
 }
