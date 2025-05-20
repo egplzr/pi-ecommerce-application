@@ -263,11 +263,23 @@
     document.getElementById('resumoTotal').textContent = total.toFixed(2);
   }
 
-  function confirmarPedido() {
-    const payload = { itens: carrinho, endereco: enderecoSelecionado, pagamento: formaPagamento };
+function confirmarPedido() {
+  const total = carrinho
+    .reduce((s,i)=>s + i.preco*i.quantidade,0)
+    .toFixed(2);
 
-    // Redirecionando para a página de confirmação com o número do pedido
-    window.location.href = '/loja/confirmacao?numero=12345';  // Redireciona para o controlador que renderiza a página confirmacaoPage
+  const pedido = {
+    numero: 12345,
+    data: new Date().toISOString(),
+    itens: carrinho,
+    endereco: enderecoSelecionado,
+    pagamento: formaPagamento,
+    total: Number(total),
+    status: 'Pendente'
+  };
+
+  localStorage.setItem('pedido', JSON.stringify(pedido));
+  window.location.href = '/loja/confirmacao?numero=12345';
 }
 
 

@@ -13,24 +13,26 @@
 <div th:fragment="scripts">
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      fetch('/api/cliente/pedidos')
-        .then(r => r.json())
-        .then(pedidos => {
-          const tbody = document.getElementById('listaPedidos');
-          pedidos.forEach(p => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td>${p.numero}</td>
-              <td>${new Date(p.data).toLocaleDateString()}</td>
-              <td>R$ ${p.total.toFixed(2)}</td>
-              <td>${p.status}</td>
-              <td>
-                <a href="/loja/pedidos/${p.numero}" class="btn btn-sm btn-primary">Detalhes</a>
-              </td>`;
-            tbody.appendChild(tr);
-          });
-        });
+      const tbody = document.getElementById('listaPedidos');
+      const pedido = JSON.parse(localStorage.getItem('pedido'));
+      if (pedido) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${pedido.numero || '-'}</td>
+          <td>${pedido.data
+            ? new Date(pedido.data).toLocaleDateString()
+            : new Date().toLocaleDateString()}</td>
+          <td>R$ ${pedido.total.toFixed(2)}</td>
+          <td>${pedido.status || 'Pendente'}</td>
+          <td>
+            <a href="/loja/pedidos/${pedido.numero}" class="btn btn-sm btn-primary">
+              Detalhes
+            </a>
+          </td>`;
+        tbody.appendChild(tr);
+      }
     });
   </script>
 </div>
+
 </html>
