@@ -124,11 +124,13 @@
     // Abrir modal de detalhes
     document.addEventListener('click', function (event) {
       if (event.target.classList.contains('ver-detalhes')) {
-        const carrinho = JSON.parse(localStorage.getItem('cart')) || [];
+        const pedido = JSON.parse(localStorage.getItem('pedido'));
+        const itens = pedido.itens || [];
+
         const tbodyItens = document.getElementById('itensPedidoBody');
         tbodyItens.innerHTML = '';
 
-        carrinho.forEach(item => {
+        itens.forEach(item => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td>${item.nome}</td>
