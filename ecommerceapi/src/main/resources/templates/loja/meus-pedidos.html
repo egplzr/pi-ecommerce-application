@@ -18,6 +18,15 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
         </div>
         <div class="modal-body">
+
+          <!-- Campos adicionais -->
+          <div class="mb-3">
+            <p><strong>Endereço de Entrega:</strong> <span id="pedidoEndereco"></span></p>
+            <p><strong>Forma de Pagamento:</strong> <span id="pedidoPagamento"></span></p>
+            <p><strong>Total do Pedido:</strong> <span id="pedidoTotal" class="text-success fw-bold"></span></p>
+          </div>
+
+          <!-- Tabela de itens do pedido -->
           <table class="table table-bordered">
             <thead>
             <tr>
@@ -121,27 +130,34 @@
       }
     });
 
-    // Abrir modal de detalhes
-    document.addEventListener('click', function (event) {
-      if (event.target.classList.contains('ver-detalhes')) {
-        const pedido = JSON.parse(localStorage.getItem('pedido'));
-        const itens = pedido.itens || [];
+   // Abrir modal de detalhes
+document.addEventListener('click', function (event) {
+  if (event.target.classList.contains('ver-detalhes')) {
+    const pedido = JSON.parse(localStorage.getItem('pedido'));
+    const itens = pedido.itens || [];
 
-        const tbodyItens = document.getElementById('itensPedidoBody');
-        tbodyItens.innerHTML = '';
+    // Preencher os campos adicionais
+    document.getElementById('pedidoEndereco').textContent = pedido.endereco || 'Não informado';
+    document.getElementById('pedidoPagamento').textContent = pedido.pagamento || 'Não informado';
+    document.getElementById('pedidoTotal').textContent = `R$ ${pedido.total?.toFixed(2) || '0.00'}`;
 
-        itens.forEach(item => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${item.nome}</td>
-            <td>R$ ${parseFloat(item.preco).toFixed(2)}</td>
-            <td>${item.quantidade}</td>
-            <td>R$ ${(item.preco * item.quantidade).toFixed(2)}</td>
-          `;
-          tbodyItens.appendChild(tr);
-        });
-      }
+    // Preencher tabela de itens
+    const tbodyItens = document.getElementById('itensPedidoBody');
+    tbodyItens.innerHTML = '';
+
+    itens.forEach(item => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${item.nome}</td>
+        <td>R$ ${parseFloat(item.preco).toFixed(2)}</td>
+        <td>${item.quantidade}</td>
+        <td>R$ ${(item.preco * item.quantidade).toFixed(2)}</td>
+      `;
+      tbodyItens.appendChild(tr);
     });
+  }
+});
+
 
     // Preencher o select com o status atual
     document.addEventListener('click', function (event) {
