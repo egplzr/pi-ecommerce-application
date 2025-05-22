@@ -42,6 +42,22 @@
       </div>
     </div>
   </header>
+  <!-- Campo de Filtro de Produto -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <form class="d-flex" method="get" th:action="@{/loja}">
+        <input class="form-control me-2"
+               type="search"
+               name="nome"
+               placeholder="Buscar produto pelo nome..."
+               th:value="${filtroNome}"
+               aria-label="Buscar">
+        <button class="btn btn-warning" type="submit">
+          <i class="bi bi-search"></i> Buscar
+        </button>
+      </form>
+    </div>
+  </div>
 
 
   <!-- Lista de Produtos -->
