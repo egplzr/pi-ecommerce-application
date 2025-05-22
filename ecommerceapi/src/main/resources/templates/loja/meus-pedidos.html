@@ -28,12 +28,39 @@
             </tr>
             </thead>
             <tbody id="itensPedidoBody">
-            <!-- Itens do pedido serão inseridos aqui via JavaScript -->
+            <!-- Itens do pedido via JavaScript -->
             </tbody>
           </table>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar Pedido -->
+  <div class="modal fade" id="modalEditarPedido" tabindex="-1" aria-labelledby="editarPedidoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editarPedidoLabel">Editar Status do Pedido</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <label for="statusPedido" class="form-label">Status</label>
+          <select id="statusPedido" class="form-select">
+            <option value="Aguardando pagamento">Aguardando pagamento</option>
+            <option value="Pagamento rejeitado">Pagamento rejeitado</option>
+            <option value="Pagamento com sucesso">Pagamento com sucesso</option>
+            <option value="Aguardando retirada">Aguardando retirada</option>
+            <option value="Em transito">Em trânsito</option>
+            <option value="Entregue">Entregue</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="salvarStatus">Salvar</button>
         </div>
       </div>
     </div>
@@ -61,28 +88,40 @@
 
 <div th:fragment="scripts">
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    let pedidoGlobal;
+
+    function renderPedido(pedido) {
       const tbody = document.getElementById('listaPedidos');
+      tbody.innerHTML = ''; // Limpa a tabela antes de redesenhar
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${pedido.numero || '-'}</td>
+        <td>${pedido.data
+          ? new Date(pedido.data).toLocaleDateString()
+          : new Date().toLocaleDateString()}</td>
+        <td>R$ ${pedido.total.toFixed(2)}</td>
+        <td id="statusAtual">${pedido.status || 'Pendente'}</td>
+        <td>
+          <button class="btn btn-sm btn-primary ver-detalhes" data-bs-toggle="modal" data-bs-target="#modalDetalhesPedido">
+            Detalhes
+          </button>
+          <button class="btn btn-sm btn-warning editar-pedido" data-bs-toggle="modal" data-bs-target="#modalEditarPedido">
+            Editar
+          </button>
+        </td>`;
+      tbody.appendChild(tr);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
       const pedido = JSON.parse(localStorage.getItem('pedido'));
       if (pedido) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${pedido.numero || '-'}</td>
-          <td>${pedido.data
-            ? new Date(pedido.data).toLocaleDateString()
-            : new Date().toLocaleDateString()}</td>
-          <td>R$ ${pedido.total.toFixed(2)}</td>
-          <td>${pedido.status || 'Pendente'}</td>
-          <td>
-            <button class="btn btn-sm btn-primary ver-detalhes" data-bs-toggle="modal" data-bs-target="#modalDetalhesPedido">
-              Detalhes
-            </button>
-          </td>`;
-        tbody.appendChild(tr);
+        pedidoGlobal = pedido;
+        renderPedido(pedido);
       }
     });
 
-    // Preenche o modal com os itens do carrinho
+    // Abrir modal de detalhes
     document.addEventListener('click', function (event) {
       if (event.target.classList.contains('ver-detalhes')) {
         const carrinho = JSON.parse(localStorage.getItem('cart')) || [];
@@ -100,6 +139,26 @@
           tbodyItens.appendChild(tr);
         });
       }
+    });
+
+    // Preencher o select com o status atual
+    document.addEventListener('click', function (event) {
+      if (event.target.classList.contains('editar-pedido')) {
+        const select = document.getElementById('statusPedido');
+        select.value = pedidoGlobal.status || 'Aguardando pagamento';
+      }
+    });
+
+    // Salvar novo status
+    document.getElementById('salvarStatus').addEventListener('click', () => {
+      const novoStatus = document.getElementById('statusPedido').value;
+      pedidoGlobal.status = novoStatus;
+      localStorage.setItem('pedido', JSON.stringify(pedidoGlobal));
+      renderPedido(pedidoGlobal);
+
+      // Fechar modal manualmente
+      const modalEditar = bootstrap.Modal.getInstance(document.getElementById('modalEditarPedido'));
+      modalEditar.hide();
     });
   </script>
 </div>
