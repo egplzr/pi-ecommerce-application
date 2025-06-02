@@ -8,7 +8,6 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
@@ -36,24 +35,43 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                // 1) DESABILITAR CSRF para endpoints que serão chamados pelo JS sem token:
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/auth/**", "/api/cliente/**", "/api/cliente/auth/**")
+                        // Ignorar CSRF para login, cliente, pedidos etc.
+                        .ignoringRequestMatchers(
+                                "/api/auth/**",
+                                "/api/cliente/**",
+                                "/api/cliente/auth/**",
+                                "/api/pedidos/**"     // <– adicionamos /api/pedidos para ignorar CSRF
+                        )
+                        // Opcional: guardar o token de CSRF em cookie se quiser usar Thymeleaf,
+                        // mas para nosso POST via JS, ignoramos o CSRF acima.
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 )
+                // 2) Configurar autorização por URL:
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/cliente/**").permitAll()
+                        .requestMatchers("/api/cliente/auth/**").permitAll()
                         .requestMatchers("/loja/**").permitAll()
-                        .requestMatchers("/api/cliente/auth/**").permitAll() // Nova linha para permitir autenticação de cliente
-                        .requestMatchers("/api/cliente/**").authenticated() // Nova linha para proteger API do cliente
-                        .requestMatchers("/loja/perfil/**").authenticated() // Nova linha para proteger página de perfil
                         .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**").permitAll()
-                        .requestMatchers("/login").permitAll()
+
+                        // Permitir que o cliente autenticado finalize pedidos:
+                        .requestMatchers("/api/pedidos/finalizar").authenticated()
+
+                        // A própria API de cliente (ex.: listar perfil) exige autenticação:
+                        .requestMatchers("/api/cliente/**").authenticated()
+                        .requestMatchers("/loja/perfil/**").authenticated()
+
+                        // Rotas administrativas – exigem ROLE_ADMIN etc.
                         .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
                         .requestMatchers("/usuarios").hasRole("ADMIN")
                         .requestMatchers("/api/produtos/**").hasAnyRole("ADMIN", "ESTOQUISTA")
                         .requestMatchers("/produtos").hasAnyRole("ADMIN", "ESTOQUISTA")
+
+                        // Qualquer outra rota, precisa estar autenticado.
                         .anyRequest().authenticated()
                 )
+                // 3) Configurar formulário de login (continua igual)
                 .formLogin(form -> form
                         .loginPage("/login")
                         .usernameParameter("email")
@@ -63,6 +81,7 @@ public class SecurityConfig {
                         .failureUrl("/login?error=true")
                         .permitAll()
                 )
+                // 4) Configurar logout (continua igual)
                 .logout(logout -> logout
                         .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
                         .logoutSuccessUrl("/login?logout=true")
@@ -70,6 +89,7 @@ public class SecurityConfig {
                         .deleteCookies("JSESSIONID")
                         .permitAll()
                 )
+                // 5) Gerenciamento de sessão
                 .sessionManagement(session -> session
                         .maximumSessions(1)
                         .expiredUrl("/login?expired=true")

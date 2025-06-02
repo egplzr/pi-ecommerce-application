@@ -4,13 +4,13 @@ import java.util.List;
 
 public class CheckoutDTO {
     private List<ItemDTO> itens;
-    private String endereco;
-    private String pagamento;
+    private String endereco;          // Ex: "Rua X, 123, Bairro Y, Cidade Z - CEP: 00000-000"
+    private String formaPagamento;    // renomeado para bater com o JSON enviado pelo front‐end
 
+    // Getters e Setters
     public List<ItemDTO> getItens() {
         return itens;
     }
-
     public void setItens(List<ItemDTO> itens) {
         this.itens = itens;
     }
@@ -18,16 +18,16 @@ public class CheckoutDTO {
     public String getEndereco() {
         return endereco;
     }
-
     public void setEndereco(String endereco) {
         this.endereco = endereco;
     }
 
-    public String getPagamento() {
-        return pagamento;
+
+    public void setFormaPagamento(String formaPagamento) {
+        this.formaPagamento = formaPagamento;
     }
 
-    public void setPagamento(String pagamento) {
-        this.pagamento = pagamento;
+    public String getformaPagamento() {
+        return formaPagamento;
     }
 }

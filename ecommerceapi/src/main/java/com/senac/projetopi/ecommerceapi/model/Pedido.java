@@ -1,43 +1,82 @@
 package com.senac.projetopi.ecommerceapi.model;
+
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Entidade que representa um pedido de compra.
+ */
 @Entity
 @Table(name = "pedidos")
 public class Pedido {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    /**
+     * Número único do pedido (por exemplo, gerado com UUID curto).
+     */
+    @Column(name = "numero_pedido", unique = true, nullable = false)
     private String numeroPedido;
 
-    @Column(nullable = false)
+    /**
+     * Data e hora de criação do pedido.
+     */
+    @Column(name = "data_criacao", nullable = false)
     private LocalDateTime dataCriacao;
 
+    /**
+     * Valor total (soma de todos os itens) do pedido.
+     */
     @Column(nullable = false)
     private BigDecimal total;
 
+    /**
+     * Status do pedido (enum: AGUARDANDO_PAGAMENTO, NO_PREPARO, ENVIADO, ENTREGUE, CANCELADO).
+     */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private StatusPedido status;
 
+    /**
+     * Endereço de entrega. Como a entidade mapeia List<String>, gravamos cada string como um elemento.
+     * Neste cenário, estamos armazenando apenas um endereço (por questão de simplicidade),
+     * mas pode-se posteriormente adicionar lógica para múltiplos endereços.
+     */
     @ElementCollection
-    @CollectionTable(name = "pedido_endereco", joinColumns = @JoinColumn(name = "pedido_id"))
-    @Column(name = "endereco")
+    @CollectionTable(
+            name = "pedido_endereco",
+            joinColumns = @JoinColumn(name = "pedido_id")
+    )
+    @Column(name = "endereco", nullable = false)
     private List<String> endereco;
 
-    @Column(nullable = false)
+    /**
+     * Forma de pagamento (por exemplo, "BOLETO" ou "CARTAO").
+     */
+    @Column(name = "forma_pagamento", nullable = false)
     private String formaPagamento;
 
+    /**
+     * Lista de itens que compõem este pedido. Cascade ALL para que, ao salvar o Pedido,
+     * os PedidoItem associados sejam salvos automaticamente.
+     */
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PedidoItem> itens;
 
+    /**
+     * Cliente que fez este pedido. Chave estrangeira para a tabela clientes.
+     */
     @ManyToOne
     @JoinColumn(name = "cliente_id", nullable = false)
     private Cliente cliente;
+
+    // ============================
+    // Getters e Setters
+    // ============================
 
     public Long getId() {
         return id;
