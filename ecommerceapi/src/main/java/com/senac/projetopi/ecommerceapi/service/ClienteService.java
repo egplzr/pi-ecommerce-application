@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -54,61 +53,6 @@ public class ClienteService {
         cliente.setAtivo(true);
 
         return clienteRepository.save(cliente);
-    }
-
-    @Transactional
-    public Cliente atualizar(Long id, Cliente clienteAtualizado) {
-        Cliente clienteExistente = buscarPorId(id);
-
-        boolean isProprioCliente = isClienteAtual(clienteExistente);
-
-        if (!clienteExistente.getCpf().equals(clienteAtualizado.getCpf())) {
-            if (!validadorCpfService.validar(clienteAtualizado.getCpf())) {
-                throw new ValidacaoException("CPF inválido");
-            }
-        }
-
-        clienteExistente.setNome(clienteAtualizado.getNome());
-        clienteExistente.setCpf(clienteAtualizado.getCpf());
-
-        if (!isProprioCliente && clienteAtualizado.getEnderecoFaturamento() != null) {
-            clienteExistente.setEnderecoFaturamento(clienteAtualizado.getEnderecoFaturamento());
-        }
-
-        if (clienteAtualizado.getSenha() != null && !clienteAtualizado.getSenha().isEmpty()) {
-            clienteExistente.setSenha(passwordEncoder.encode(clienteAtualizado.getSenha()));
-        }
-
-        return clienteRepository.save(clienteExistente);
-    }
-
-    @Transactional
-    public Cliente alternarStatus(Long id) {
-        Cliente cliente = buscarPorId(id);
-
-        if (isClienteAtual(cliente)) {
-            throw new ValidacaoException("Não é permitido alterar o status do próprio cliente logado");
-        }
-
-        cliente.setAtivo(!cliente.isAtivo());
-
-        return clienteRepository.save(cliente);
-    }
-
-    private boolean isClienteAtual(Cliente cliente) {
-        // Aqui você pode obter o email do cliente logado (como feito no UsuarioService)
-        String emailClienteLogado = "cliente@exemplo.com"; // Substitua pela lógica para obter o cliente logado
-        return cliente.getEmail().equals(emailClienteLogado);
-    }
-
-    private void validarCliente(Cliente cliente) {
-        if (clienteRepository.existsByEmail(cliente.getEmail())) {
-            throw new ValidacaoException("Email já cadastrado");
-        }
-
-        if (clienteRepository.existsByCpf(cliente.getCpf())) {
-            throw new ValidacaoException("CPF já cadastrado");
-        }
     }
 
     @Transactional
@@ -154,7 +98,7 @@ public class ClienteService {
         Cliente cliente = buscarPorId(id);
 
         if (cliente.getEnderecosEntrega() == null) {
-            cliente.setEnderecosEntrega(new ArrayList<>());
+            cliente.setEnderecosEntrega(new java.util.ArrayList<>());
         }
 
         cliente.getEnderecosEntrega().add(novoEndereco);
@@ -191,16 +135,19 @@ public class ClienteService {
             throw new ValidacaoException("Índice de endereço inválido");
         }
 
-        // Pega o endereço escolhido
         String enderecoPadrao = cliente.getEnderecosEntrega().get(index);
-
-        // Remove da lista atual
         cliente.getEnderecosEntrega().remove(index);
-
-        // Adiciona na primeira posição (índice 0 será considerado o padrão)
         cliente.getEnderecosEntrega().add(0, enderecoPadrao);
 
         return clienteRepository.save(cliente);
     }
-}
 
+    private void validarCliente(Cliente cliente) {
+        if (clienteRepository.existsByEmail(cliente.getEmail())) {
+            throw new ValidacaoException("Email já cadastrado");
+        }
+        if (clienteRepository.existsByCpf(cliente.getCpf())) {
+            throw new ValidacaoException("CPF já cadastrado");
+        }
+    }
+}

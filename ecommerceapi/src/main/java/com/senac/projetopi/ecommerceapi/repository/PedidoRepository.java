@@ -1,9 +1,11 @@
 package com.senac.projetopi.ecommerceapi.repository;
 
-import com.senac.projetopi.ecommerceapi.model.Pedido;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import com.senac.projetopi.ecommerceapi.model.Pedido;
 
-@Repository
+import java.util.List;
+
 public interface PedidoRepository extends JpaRepository<Pedido, Long> {
+    List<Pedido> findAllByOrderByDataCriacaoDesc();
+    List<Pedido> findAllByClienteIdOrderByDataCriacaoDesc(Long clienteId);
 }

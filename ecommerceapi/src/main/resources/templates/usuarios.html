@@ -141,6 +141,8 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+
+               // Botão de salvar que chama a função
                 <button type="button" class="btn btn-primary" onclick="salvarUsuario()">Salvar</button>
             </div>
         </div>
@@ -448,6 +450,7 @@
             const method = id ? 'PUT' : 'POST';
             const url = id ? `/api/usuarios/${id}` : '/api/usuarios';
 
+            //enviar dados para usuarioDTO
             fetch(url, {
                 method: method,
                 headers: {
@@ -461,11 +464,13 @@
                 }
                 return response.json();
             })
+            // se o cadstro for bem sucedido ele executa essa parte
             .then(data => {
                 modalUsuario.hide();
                 buscarUsuarios();
                 alert(id ? 'Usuário atualizado com sucesso!' : 'Usuário criado com sucesso!');
             })
+            // se der erro para salvar usuario
             .catch(error => {
                 console.error('Erro ao salvar usuário:', error);
                 try {

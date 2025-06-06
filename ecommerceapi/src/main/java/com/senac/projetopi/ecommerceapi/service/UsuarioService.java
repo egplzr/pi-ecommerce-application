@@ -48,6 +48,7 @@ public class UsuarioService {
         return usuarioRepository.findByEmail(email);
     }
 
+    // metodo para criar usuario, validar cpf e esconder senha
     @Transactional
     public Usuario criar(Usuario usuario) {
         validarUsuario(usuario);

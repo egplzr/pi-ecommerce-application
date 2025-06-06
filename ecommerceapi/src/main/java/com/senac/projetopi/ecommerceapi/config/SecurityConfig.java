@@ -35,43 +35,39 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // 1) DESABILITAR CSRF para endpoints que serão chamados pelo JS sem token:
+                // 1) CSRF
                 .csrf(csrf -> csrf
-                        // Ignorar CSRF para login, cliente, pedidos etc.
                         .ignoringRequestMatchers(
                                 "/api/auth/**",
                                 "/api/cliente/**",
                                 "/api/cliente/auth/**",
-                                "/api/pedidos/**"     // <– adicionamos /api/pedidos para ignorar CSRF
+                                "/api/pedidos/**"
                         )
-                        // Opcional: guardar o token de CSRF em cookie se quiser usar Thymeleaf,
-                        // mas para nosso POST via JS, ignoramos o CSRF acima.
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 )
-                // 2) Configurar autorização por URL:
+                // 2) Autorizações
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/cliente/auth/**").permitAll()
                         .requestMatchers("/loja/**").permitAll()
                         .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**").permitAll()
-
-                        // Permitir que o cliente autenticado finalize pedidos:
                         .requestMatchers("/api/pedidos/finalizar").authenticated()
-
-                        // A própria API de cliente (ex.: listar perfil) exige autenticação:
                         .requestMatchers("/api/cliente/**").authenticated()
                         .requestMatchers("/loja/perfil/**").authenticated()
 
-                        // Rotas administrativas – exigem ROLE_ADMIN etc.
+                        // 🔧 Corrigido: permitir acesso ao estoquista
+                        .requestMatchers("/loja/pedidos/**").hasRole("ESTOQUISTA")
+
+
                         .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
                         .requestMatchers("/usuarios").hasRole("ADMIN")
                         .requestMatchers("/api/produtos/**").hasAnyRole("ADMIN", "ESTOQUISTA")
                         .requestMatchers("/produtos").hasAnyRole("ADMIN", "ESTOQUISTA")
 
-                        // Qualquer outra rota, precisa estar autenticado.
+                        // catch-all
                         .anyRequest().authenticated()
                 )
-                // 3) Configurar formulário de login (continua igual)
+                // 3) Login
                 .formLogin(form -> form
                         .loginPage("/login")
                         .usernameParameter("email")
@@ -81,7 +77,7 @@ public class SecurityConfig {
                         .failureUrl("/login?error=true")
                         .permitAll()
                 )
-                // 4) Configurar logout (continua igual)
+                // 4) Logout
                 .logout(logout -> logout
                         .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
                         .logoutSuccessUrl("/login?logout=true")
@@ -89,7 +85,7 @@ public class SecurityConfig {
                         .deleteCookies("JSESSIONID")
                         .permitAll()
                 )
-                // 5) Gerenciamento de sessão
+                // 5) Sessão
                 .sessionManagement(session -> session
                         .maximumSessions(1)
                         .expiredUrl("/login?expired=true")

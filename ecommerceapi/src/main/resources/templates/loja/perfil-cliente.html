@@ -119,6 +119,10 @@
             <button class="nav-link" id="senha-tab" data-bs-toggle="tab" data-bs-target="#senha" type="button"
                     role="tab" aria-controls="senha" aria-selected="false">Alterar Senha</button>
         </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="meusPedidos-tab" data-bs-toggle="tab" data-bs-target="#pedidos" type="button"
+                    role="tab" aria-controls="pedidos" aria-selected="false">Meus Pedidos</button>
+        </li>
     </ul>
 
     <div class="tab-content" id="profileTabsContent">
@@ -202,6 +206,38 @@
 
                 <button type="submit" class="btn btn-custom">Alterar Senha</button>
             </form>
+        </div>
+
+        <!-- Aba de Meus Pedidos -->
+        <div class="tab-pane fade" id="pedidos" role="tabpanel" aria-labelledby="meusPedidos-tab">
+            <div class="row mb-3">
+                <div class="col-12 text-center" id="spinnerPedidos" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Carregando pedidos...</span>
+                    </div>
+                </div>
+                <div class="col-12 text-center text-muted" id="naoTemPedidos" style="display: none;">
+                    <p>Você ainda não possui pedidos.</p>
+                </div>
+                <div class="col-12" id="conteudoPedidos" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                            <tr>
+                                <th>Número do Pedido</th>
+                                <th>Data</th>
+                                <th>Status</th>
+                                <th>Total (R$)</th>
+                                <th>Ações</th>
+                            </tr>
+                            </thead>
+                            <tbody id="corpoTabelaPedidos">
+                            <!-- Linhas de pedidos serão injetadas aqui -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -287,589 +323,629 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // Variável para evitar múltiplas requisições na aba “Meus Pedidos”
+    let pedidosJaCarregados = false;
+
     // Função para verificar autenticação
-function verificarAutenticacao() {
-    fetch('/api/cliente/auth/status')
-        .then(response => response.json())
-        .then(data => {
-            if (!data.autenticado) {
-                // Redirecionar para a página de login se não estiver autenticado
+    function verificarAutenticacao() {
+        fetch('/api/cliente/auth/status')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.autenticado) {
+                    // Redirecionar para a página de login se não estiver autenticado
+                    window.location.href = '/loja/login-cliente';
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao verificar autenticação:', error);
                 window.location.href = '/loja/login-cliente';
-            }
-        })
-        .catch(error => {
-            console.error('Erro ao verificar autenticação:', error);
-            // Em caso de erro, redirecionar para a página de login
-            window.location.href = '/loja/login-cliente';
-        });
-}
+            });
+    }
 
-// Variáveis para manipulação dos modais
-let modalNovoEndereco = null;
-let modalConfirmacao = null;
+    // Variáveis para manipulação dos modais
+    let modalNovoEndereco = null;
+    let modalConfirmacao = null;
 
-// Dados do cliente
-let dadosCliente = null;
+    // Dados do cliente
+    let dadosCliente = null;
 
-// Inicialização da página
-document.addEventListener('DOMContentLoaded', function() {
-    verificarAutenticacao();
-    // Inicializar modais
-    modalNovoEndereco = new bootstrap.Modal(document.getElementById('modalNovoEndereco'));
-    modalConfirmacao = new bootstrap.Modal(document.getElementById('modalConfirmacao'));
+    // Inicialização da página
+    document.addEventListener('DOMContentLoaded', function () {
+        verificarAutenticacao();
+        // Inicializar modais
+        modalNovoEndereco = new bootstrap.Modal(document.getElementById('modalNovoEndereco'));
+        modalConfirmacao = new bootstrap.Modal(document.getElementById('modalConfirmacao'));
+
+        // Carregar dados do cliente
+        carregarDadosCliente();
+
+        // Adicionar eventos aos formulários
+        document.getElementById('formDados').addEventListener('submit', salvarDadosPessoais);
+        document.getElementById('formSenha').addEventListener('submit', alterarSenha);
+        document.getElementById('btnSalvarEndereco').addEventListener('click', salvarNovoEndereco);
+
+        // Adicionar validação de CEP
+        document.getElementById('cep').addEventListener('blur', buscarCep);
+
+        // Quando a aba “Meus Pedidos” for exibida, dispara a busca
+        document.getElementById('meusPedidos-tab')
+            .addEventListener('shown.bs.tab', carregarMeusPedidos);
+    });
+
+    // Função para exibir mensagens de sucesso
+    function mostrarSucesso(mensagem) {
+        document.getElementById('successMessage').textContent = mensagem;
+        document.getElementById('successAlert').style.display = 'block';
+        document.getElementById('errorAlert').style.display = 'none';
+
+        // Ocultar após 5 segundos
+        setTimeout(() => {
+            document.getElementById('successAlert').style.display = 'none';
+        }, 5000);
+    }
+
+    // Função para exibir mensagens de erro
+    function mostrarErro(mensagem) {
+        document.getElementById('errorMessage').textContent = mensagem;
+        document.getElementById('errorAlert').style.display = 'block';
+        document.getElementById('successAlert').style.display = 'none';
+
+        // Ocultar após 5 segundos
+        setTimeout(() => {
+            document.getElementById('errorAlert').style.display = 'none';
+        }, 5000);
+    }
 
     // Carregar dados do cliente
-    carregarDadosCliente();
-
-    // Adicionar eventos aos formulários
-    document.getElementById('formDados').addEventListener('submit', salvarDadosPessoais);
-    document.getElementById('formSenha').addEventListener('submit', alterarSenha);
-    document.getElementById('btnSalvarEndereco').addEventListener('click', salvarNovoEndereco);
-
-    // Adicionar validação de CEP
-    document.getElementById('cep').addEventListener('blur', buscarCep);
-});
-
-// Função para exibir mensagens de sucesso
-function mostrarSucesso(mensagem) {
-    document.getElementById('successMessage').textContent = mensagem;
-    document.getElementById('successAlert').style.display = 'block';
-    document.getElementById('errorAlert').style.display = 'none';
-
-    // Ocultar após 5 segundos
-    setTimeout(() => {
-        document.getElementById('successAlert').style.display = 'none';
-    }, 5000);
-}
-
-// Função para exibir mensagens de erro
-function mostrarErro(mensagem) {
-    document.getElementById('errorMessage').textContent = mensagem;
-    document.getElementById('errorAlert').style.display = 'block';
-    document.getElementById('successAlert').style.display = 'none';
-
-    // Ocultar após 5 segundos
-    setTimeout(() => {
-        document.getElementById('errorAlert').style.display = 'none';
-    }, 5000);
-}
-
-// Carregar dados do cliente
-function carregarDadosCliente() {
-    // Verificar autenticação antes de fazer a requisição
-    fetch('/api/cliente/auth/status')
-        .then(response => response.json())
-        .then(data => {
-            if (!data.autenticado) {
-                window.location.href = '/loja/login-cliente';
-                throw new Error('Sessão expirada');
-            }
-
-            // Se estiver autenticado, continuar com a requisição
-            return fetch('/api/cliente/perfil');
-        })
-        .then(response => {
-            console.log('Response status carregarDadosCliente:', response.status);
-            if (!response.ok) {
-                if (response.status === 401) {
+    function carregarDadosCliente() {
+        fetch('/api/cliente/auth/status')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.autenticado) {
                     window.location.href = '/loja/login-cliente';
-                    throw new Error('Usuário não autenticado');
+                    throw new Error('Sessão expirada');
                 }
-                return response.text().then(text => {
-                    console.log('Error response text:', text);
-                    try {
-                        const errorData = JSON.parse(text);
-                        throw new Error(errorData.message || 'Erro desconhecido');
-                    } catch (e) {
-                        throw new Error('Erro ao processar resposta: ' + text);
+                return fetch('/api/cliente/perfil');
+            })
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = '/loja/login-cliente';
+                        throw new Error('Usuário não autenticado');
                     }
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            dadosCliente = data;
-            preencherFormularioCliente(data);
-            renderizarEnderecos(data.enderecosEntrega || []);
-        })
-        .catch(error => {
-            console.error('Erro ao carregar dados do cliente:', error);
-            try {
-                if (error.message) {
-                    mostrarErro(error.message);
-                } else {
+                    return response.text().then(text => {
+                        try {
+                            const errorData = JSON.parse(text);
+                            throw new Error(errorData.message || 'Erro desconhecido');
+                        } catch {
+                            throw new Error('Erro ao processar resposta: ' + text);
+                        }
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                dadosCliente = data;
+                preencherFormularioCliente(data);
+                renderizarEnderecos(data.enderecosEntrega || []);
+            })
+            .catch(error => {
+                console.error('Erro ao carregar dados do cliente:', error);
+                try {
+                    if (error.message) {
+                        mostrarErro(error.message);
+                    } else {
+                        mostrarErro('Erro ao carregar seus dados. Por favor, tente novamente.');
+                    }
+                } catch {
                     mostrarErro('Erro ao carregar seus dados. Por favor, tente novamente.');
                 }
-            } catch (e) {
-                mostrarErro('Erro ao carregar seus dados. Por favor, tente novamente.');
-            }
-        });
-}
-
-// Preenche os campos do formulário com os dados do cliente
-function preencherFormularioCliente(cliente) {
-    document.getElementById('nome').value = cliente.nome || '';
-    document.getElementById('email').value = cliente.email || '';
-    document.getElementById('cpf').value = cliente.cpf || '';
-
-    if (cliente.dataNascimento) {
-        // Converter data para formato YYYY-MM-DD para o input date
-        const data = new Date(cliente.dataNascimento);
-        const dataFormatada = data.toISOString().split('T')[0];
-        document.getElementById('dataNascimento').value = dataFormatada;
+            });
     }
 
-    if (cliente.genero) {
-        document.getElementById('genero').value = cliente.genero;
-    }
-}
+    // Preenche os campos do formulário com os dados do cliente
+    function preencherFormularioCliente(cliente) {
+        document.getElementById('nome').value = cliente.nome || '';
+        document.getElementById('email').value = cliente.email || '';
+        document.getElementById('cpf').value = cliente.cpf || '';
 
-// Renderizar lista de endereços
-function renderizarEnderecos(enderecos) {
-    const listaEnderecos = document.getElementById('listaEnderecos');
-    listaEnderecos.innerHTML = '';
+        if (cliente.dataNascimento) {
+            const data = new Date(cliente.dataNascimento);
+            const dataFormatada = data.toISOString().split('T')[0];
+            document.getElementById('dataNascimento').value = dataFormatada;
+        }
 
-    if (!enderecos || enderecos.length === 0) {
-        listaEnderecos.innerHTML = `
-            <div class="col-12 text-center py-4">
-                <p class="text-muted">Você ainda não possui endereços cadastrados.</p>
-            </div>
-        `;
-        return;
+        if (cliente.genero) {
+            document.getElementById('genero').value = cliente.genero;
+        }
     }
 
-    enderecos.forEach((endereco, index) => {
-        const isPadrao = index === 0; // O primeiro endereço é considerado o padrão
+    // Renderizar lista de endereços
+    function renderizarEnderecos(enderecos) {
+        const listaEnderecos = document.getElementById('listaEnderecos');
+        listaEnderecos.innerHTML = '';
 
-        const enderecoCard = document.createElement('div');
-        enderecoCard.className = 'col-md-6 mb-3';
-        enderecoCard.innerHTML = `
-            <div class="card address-card p-3 ${isPadrao ? 'default' : ''}">
-                ${isPadrao ? '<span class="badge bg-success address-badge">Padrão</span>' : ''}
-                <div class="card-body">
-                    <p class="card-text">${endereco}</p>
-                    <div class="address-actions">
-                        ${!isPadrao ? `
-                            <button class="btn btn-sm btn-outline-primary me-2" onclick="definirEnderecoPadrao(${index})">
-                                Definir como Padrão
+        if (!enderecos || enderecos.length === 0) {
+            listaEnderecos.innerHTML = `
+                <div class="col-12 text-center py-4">
+                    <p class="text-muted">Você ainda não possui endereços cadastrados.</p>
+                </div>
+            `;
+            return;
+        }
+
+        enderecos.forEach((endereco, index) => {
+            const isPadrao = index === 0;
+
+            const enderecoCard = document.createElement('div');
+            enderecoCard.className = 'col-md-6 mb-3';
+            enderecoCard.innerHTML = `
+                <div class="card address-card p-3 ${isPadrao ? 'default' : ''}">
+                    ${isPadrao ? '<span class="badge bg-success address-badge">Padrão</span>' : ''}
+                    <div class="card-body">
+                        <p class="card-text">${endereco}</p>
+                        <div class="address-actions">
+                            ${!isPadrao ? `
+                                <button class="btn btn-sm btn-outline-primary me-2" onclick="definirEnderecoPadrao(${index})">
+                                    Definir como Padrão
+                                </button>
+                            ` : ''}
+                            <button class="btn btn-sm btn-outline-danger" onclick="confirmarRemoverEndereco(${index})">
+                                <i class="bi bi-trash"></i>
                             </button>
-                        ` : ''}
-                        <button class="btn btn-sm btn-outline-danger" onclick="confirmarRemoverEndereco(${index})">
-                            <i class="bi bi-trash"></i>
-                        </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `;
+            `;
+            listaEnderecos.appendChild(enderecoCard);
+        });
+    }
 
-        listaEnderecos.appendChild(enderecoCard);
-    });
-}
+    // Salvar dados pessoais
+    function salvarDadosPessoais(event) {
+        event.preventDefault();
 
-// Salvar dados pessoais
-function salvarDadosPessoais(event) {
-    event.preventDefault();
+        fetch('/api/cliente/auth/status')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.autenticado) {
+                    window.location.href = '/loja/login-cliente';
+                    throw new Error('Sessão expirada');
+                }
 
-    // Verificar autenticação antes de fazer a requisição
-    fetch('/api/cliente/auth/status')
-        .then(response => response.json())
-        .then(data => {
-            if (!data.autenticado) {
-                window.location.href = '/loja/login-cliente';
-                throw new Error('Sessão expirada');
-            }
+                const dadosAtualizados = {
+                    nome: document.getElementById('nome').value,
+                    email: document.getElementById('email').value,
+                    cpf: document.getElementById('cpf').value,
+                    dataNascimento: document.getElementById('dataNascimento').value,
+                    genero: document.getElementById('genero').value,
+                    enderecoFaturamento: dadosCliente.enderecoFaturamento,
+                    senha: "manterSenhaAtual"
+                };
 
-            // Incluir todos os campos obrigatórios do cliente, não apenas os que estamos alterando
-            const dadosAtualizados = {
-                nome: document.getElementById('nome').value,
-                email: document.getElementById('email').value, // Mesmo que seja somente leitura na interface
-                cpf: document.getElementById('cpf').value, // Mesmo que seja somente leitura na interface
-                dataNascimento: document.getElementById('dataNascimento').value,
-                genero: document.getElementById('genero').value,
-                // Incluindo os campos que o backend exige, usando os dados que já temos
-                enderecoFaturamento: dadosCliente.enderecoFaturamento,
-                // O campo senha deve ser incluído mesmo que não esteja sendo alterado
-                senha: "manterSenhaAtual" // Uma indicação para o backend manter a senha atual
-            };
-
-            return fetch('/api/cliente/atualizar', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(dadosAtualizados)
-            });
-        })
-        .then(response => {
-            console.log('Response status salvarDadosPessoais:', response.status);
-            if (!response.ok) {
-                return response.text().then(text => {
-                    console.log('Error response text:', text);
-                    try {
-                        const errorData = JSON.parse(text);
-                        throw new Error(errorData.message || 'Erro desconhecido');
-                    } catch (e) {
-                        throw new Error('Erro ao processar resposta: ' + text);
-                    }
+                return fetch('/api/cliente/atualizar', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dadosAtualizados)
                 });
-            }
-            return response.json();
-        })
-        .then(data => {
-            dadosCliente = data;
-            mostrarSucesso('Dados pessoais atualizados com sucesso!');
-        })
-        .catch(error => {
-            console.error('Erro ao atualizar dados:', error);
-            try {
-                if (error.message) {
-                    mostrarErro(error.message);
-                } else {
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        try {
+                            const errorData = JSON.parse(text);
+                            throw new Error(errorData.message || 'Erro desconhecido');
+                        } catch {
+                            throw new Error('Erro ao processar resposta: ' + text);
+                        }
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                dadosCliente = data;
+                mostrarSucesso('Dados pessoais atualizados com sucesso!');
+            })
+            .catch(error => {
+                console.error('Erro ao atualizar dados:', error);
+                try {
+                    if (error.message) {
+                        mostrarErro(error.message);
+                    } else {
+                        mostrarErro('Erro ao atualizar seus dados. Por favor, tente novamente.');
+                    }
+                } catch {
                     mostrarErro('Erro ao atualizar seus dados. Por favor, tente novamente.');
                 }
-            } catch (e) {
-                mostrarErro('Erro ao atualizar seus dados. Por favor, tente novamente.');
-            }
-        });
-}
-
-// Alterar senha
-function alterarSenha(event) {
-    event.preventDefault();
-
-    const senhaAtual = document.getElementById('senhaAtual').value;
-    const novaSenha = document.getElementById('novaSenha').value;
-    const confirmarSenha = document.getElementById('confirmarSenha').value;
-
-    if (novaSenha !== confirmarSenha) {
-        mostrarErro('As senhas não conferem!');
-        return;
+            });
     }
 
-    // Verificar autenticação antes de fazer a requisição
-    fetch('/api/cliente/auth/status')
-        .then(response => response.json())
-        .then(data => {
-            if (!data.autenticado) {
-                window.location.href = '/loja/login-cliente';
-                throw new Error('Sessão expirada');
-            }
+    // Alterar senha
+    function alterarSenha(event) {
+        event.preventDefault();
 
-            const dadosAtualizados = {
-                senha: novaSenha
-            };
+        const senhaAtual = document.getElementById('senhaAtual').value;
+        const novaSenha = document.getElementById('novaSenha').value;
+        const confirmarSenha = document.getElementById('confirmarSenha').value;
 
-            return fetch('/api/cliente/atualizar', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(dadosAtualizados)
-            });
-        })
-        .then(response => {
-            console.log('Response status alterarSenha:', response.status);
-            if (!response.ok) {
-                return response.text().then(text => {
-                    console.log('Error response text:', text);
-                    try {
-                        const errorData = JSON.parse(text);
-                        throw new Error(errorData.message || 'Erro desconhecido');
-                    } catch (e) {
-                        throw new Error('Erro ao processar resposta: ' + text);
-                    }
+        if (novaSenha !== confirmarSenha) {
+            mostrarErro('As senhas não conferem!');
+            return;
+        }
+
+        fetch('/api/cliente/auth/status')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.autenticado) {
+                    window.location.href = '/loja/login-cliente';
+                    throw new Error('Sessão expirada');
+                }
+
+                const dadosAtualizados = { senha: novaSenha };
+
+                return fetch('/api/cliente/atualizar', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dadosAtualizados)
                 });
-            }
-            return response.json();
-        })
-        .then(data => {
-            document.getElementById('formSenha').reset();
-            mostrarSucesso('Senha alterada com sucesso!');
-        })
-        .catch(error => {
-            console.error('Erro ao alterar senha:', error);
-            try {
-                if (error.message) {
-                    mostrarErro(error.message);
-                } else {
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        try {
+                            const errorData = JSON.parse(text);
+                            throw new Error(errorData.message || 'Erro desconhecido');
+                        } catch {
+                            throw new Error('Erro ao processar resposta: ' + text);
+                        }
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('formSenha').reset();
+                mostrarSucesso('Senha alterada com sucesso!');
+            })
+            .catch(error => {
+                console.error('Erro ao alterar senha:', error);
+                try {
+                    if (error.message) {
+                        mostrarErro(error.message);
+                    } else {
+                        mostrarErro('Erro ao alterar sua senha. Por favor, tente novamente.');
+                    }
+                } catch {
                     mostrarErro('Erro ao alterar sua senha. Por favor, tente novamente.');
                 }
-            } catch (e) {
-                mostrarErro('Erro ao alterar sua senha. Por favor, tente novamente.');
-            }
-        });
-}
-
-// Buscar CEP usando a API ViaCEP
-function buscarCep() {
-    const cep = document.getElementById('cep').value.replace(/\D/g, '');
-
-    if (cep.length !== 8) {
-        return;
-    }
-
-    fetch(`https://viacep.com.br/ws/${cep}/json/`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.erro) {
-                mostrarErro('CEP não encontrado.');
-                return;
-            }
-
-            document.getElementById('logradouro').value = data.logradouro;
-            document.getElementById('bairro').value = data.bairro;
-            document.getElementById('cidade').value = data.localidade;
-            document.getElementById('uf').value = data.uf;
-            document.getElementById('numero').focus();
-        })
-        .catch(error => {
-            console.error('Erro ao buscar CEP:', error);
-            mostrarErro('Erro ao buscar o CEP. Por favor, tente novamente.');
-        });
-}
-
-// Salvar novo endereço
-function salvarNovoEndereco() {
-    const form = document.getElementById('formNovoEndereco');
-
-    if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-    }
-
-    // Verificar autenticação antes de fazer a requisição
-    fetch('/api/cliente/auth/status')
-        .then(response => response.json())
-        .then(data => {
-            if (!data.autenticado) {
-                window.location.href = '/loja/login-cliente';
-                throw new Error('Sessão expirada');
-            }
-
-            const cep = document.getElementById('cep').value;
-            const logradouro = document.getElementById('logradouro').value;
-            const numero = document.getElementById('numero').value;
-            const complemento = document.getElementById('complemento').value;
-            const bairro = document.getElementById('bairro').value;
-            const cidade = document.getElementById('cidade').value;
-            const uf = document.getElementById('uf').value;
-            const padrao = document.getElementById('enderecoPadrao').checked;
-
-            // Formatar o endereço como string
-            const enderecoCompleto = `${logradouro}, ${numero}${complemento ? `, ${complemento}` : ''} - ${bairro} - ${cidade}/${uf} - CEP: ${cep}`;
-
-            const enderecoDTO = {
-                endereco: enderecoCompleto,
-                padrao: padrao
-            };
-
-            return fetch('/api/cliente/endereco', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(enderecoDTO)
             });
-        })
-        .then(response => {
-            console.log('Response status salvarNovoEndereco:', response.status);
-            if (!response.ok) {
-                return response.text().then(text => {
-                    console.log('Error response text:', text);
-                    try {
-                        const errorData = JSON.parse(text);
-                        throw new Error(errorData.message || 'Erro desconhecido');
-                    } catch (e) {
-                        throw new Error('Erro ao processar resposta: ' + text);
-                    }
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            modalNovoEndereco.hide();
-            form.reset();
+    }
 
-            // Se marcado como padrão, moverá para a primeira posição na lista
-            if (data.enderecosEntrega && data.enderecosEntrega.length > 0) {
-                renderizarEnderecos(data.enderecosEntrega);
-                if (data.padrao) {
-                    definirEnderecoPadrao(data.enderecosEntrega.length - 1);
+    // Buscar CEP usando a API ViaCEP
+    function buscarCep() {
+        const cep = document.getElementById('cep').value.replace(/\D/g, '');
+
+        if (cep.length !== 8) {
+            return;
+        }
+
+        fetch(`https://viacep.com.br/ws/${cep}/json/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.erro) {
+                    mostrarErro('CEP não encontrado.');
+                    return;
                 }
-            }
+                document.getElementById('logradouro').value = data.logradouro;
+                document.getElementById('bairro').value = data.bairro;
+                document.getElementById('cidade').value = data.localidade;
+                document.getElementById('uf').value = data.uf;
+                document.getElementById('numero').focus();
+            })
+            .catch(error => {
+                console.error('Erro ao buscar CEP:', error);
+                mostrarErro('Erro ao buscar o CEP. Por favor, tente novamente.');
+            });
+    }
 
-            mostrarSucesso('Endereço adicionado com sucesso!');
-        })
-        .catch(error => {
-            console.error('Erro ao adicionar endereço:', error);
-            try {
-                if (error.message) {
-                    mostrarErro(error.message);
-                } else {
+    // Salvar novo endereço
+    function salvarNovoEndereco() {
+        const form = document.getElementById('formNovoEndereco');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        fetch('/api/cliente/auth/status')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.autenticado) {
+                    window.location.href = '/loja/login-cliente';
+                    throw new Error('Sessão expirada');
+                }
+
+                const cep = document.getElementById('cep').value;
+                const logradouro = document.getElementById('logradouro').value;
+                const numero = document.getElementById('numero').value;
+                const complemento = document.getElementById('complemento').value;
+                const bairro = document.getElementById('bairro').value;
+                const cidade = document.getElementById('cidade').value;
+                const uf = document.getElementById('uf').value;
+                const padrao = document.getElementById('enderecoPadrao').checked;
+
+                const enderecoCompleto = `${logradouro}, ${numero}${complemento ? `, ${complemento}` : ''} - ${bairro} - ${cidade}/${uf} - CEP: ${cep}`;
+                const enderecoDTO = { endereco: enderecoCompleto, padrao: padrao };
+
+                return fetch('/api/cliente/endereco', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(enderecoDTO)
+                });
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        try {
+                            const errorData = JSON.parse(text);
+                            throw new Error(errorData.message || 'Erro desconhecido');
+                        } catch {
+                            throw new Error('Erro ao processar resposta: ' + text);
+                        }
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                modalNovoEndereco.hide();
+                form.reset();
+                if (data.enderecosEntrega && data.enderecosEntrega.length > 0) {
+                    renderizarEnderecos(data.enderecosEntrega);
+                    if (data.padrao) {
+                        definirEnderecoPadrao(data.enderecosEntrega.length - 1);
+                    }
+                }
+                mostrarSucesso('Endereço adicionado com sucesso!');
+            })
+            .catch(error => {
+                console.error('Erro ao adicionar endereço:', error);
+                try {
+                    if (error.message) {
+                        mostrarErro(error.message);
+                    } else {
+                        mostrarErro('Erro ao adicionar endereço. Por favor, tente novamente.');
+                    }
+                } catch {
                     mostrarErro('Erro ao adicionar endereço. Por favor, tente novamente.');
                 }
-            } catch (e) {
-                mostrarErro('Erro ao adicionar endereço. Por favor, tente novamente.');
-            }
-        });
-}
-
-// Confirmar remoção de endereço
-function confirmarRemoverEndereco(index) {
-    document.getElementById('mensagemConfirmacao').textContent = 'Tem certeza que deseja remover este endereço?';
-
-    document.getElementById('btnConfirmar').onclick = function() {
-        removerEndereco(index);
-        modalConfirmacao.hide();
-    };
-
-    modalConfirmacao.show();
-}
-
-// Remover endereço
-function removerEndereco(index) {
-    // Verificar autenticação antes de fazer a requisição
-    fetch('/api/cliente/auth/status')
-        .then(response => response.json())
-        .then(data => {
-            if (!data.autenticado) {
-                window.location.href = '/loja/login-cliente';
-                throw new Error('Sessão expirada');
-            }
-
-            return fetch(`/api/cliente/endereco/${index}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
             });
-        })
-        .then(response => {
-            console.log('Response status removerEndereco:', response.status);
-            if (!response.ok) {
-                return response.text().then(text => {
-                    console.log('Error response text:', text);
-                    try {
-                        const errorData = JSON.parse(text);
-                        throw new Error(errorData.message || 'Erro desconhecido');
-                    } catch (e) {
-                        throw new Error('Erro ao processar resposta: ' + text);
-                    }
+    }
+
+    // Confirmar remoção de endereço
+    function confirmarRemoverEndereco(index) {
+        document.getElementById('mensagemConfirmacao').textContent =
+            'Tem certeza que deseja remover este endereço?';
+        document.getElementById('btnConfirmar').onclick = function () {
+            removerEndereco(index);
+            modalConfirmacao.hide();
+        };
+        modalConfirmacao.show();
+    }
+
+    // Remover endereço
+    function removerEndereco(index) {
+        fetch('/api/cliente/auth/status')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.autenticado) {
+                    window.location.href = '/loja/login-cliente';
+                    throw new Error('Sessão expirada');
+                }
+                return fetch(`/api/cliente/endereco/${index}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
                 });
-            }
-            return response.json();
-        })
-        .then(data => {
-            renderizarEnderecos(data.enderecosEntrega);
-            mostrarSucesso('Endereço removido com sucesso!');
-        })
-        .catch(error => {
-            console.error('Erro ao remover endereço:', error);
-            try {
-                if (error.message) {
-                    mostrarErro(error.message);
-                } else {
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        try {
+                            const errorData = JSON.parse(text);
+                            throw new Error(errorData.message || 'Erro desconhecido');
+                        } catch {
+                            throw new Error('Erro ao processar resposta: ' + text);
+                        }
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                renderizarEnderecos(data.enderecosEntrega);
+                mostrarSucesso('Endereço removido com sucesso!');
+            })
+            .catch(error => {
+                console.error('Erro ao remover endereço:', error);
+                try {
+                    if (error.message) {
+                        mostrarErro(error.message);
+                    } else {
+                        mostrarErro('Erro ao remover endereço. Por favor, tente novamente.');
+                    }
+                } catch {
                     mostrarErro('Erro ao remover endereço. Por favor, tente novamente.');
                 }
-            } catch (e) {
-                mostrarErro('Erro ao remover endereço. Por favor, tente novamente.');
-            }
-        });
-}
-
-// Definir endereço como padrão
-function definirEnderecoPadrao(index) {
-    // Verificar autenticação antes de fazer a requisição
-    fetch('/api/cliente/auth/status')
-        .then(response => response.json())
-        .then(data => {
-            if (!data.autenticado) {
-                window.location.href = '/loja/login-cliente';
-                throw new Error('Sessão expirada');
-            }
-
-            return fetch(`/api/cliente/endereco/${index}/padrao`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
             });
-        })
-        .then(response => {
-            console.log('Response status definirEnderecoPadrao:', response.status);
-            if (!response.ok) {
-                return response.text().then(text => {
-                    console.log('Error response text:', text);
-                    try {
-                        const errorData = JSON.parse(text);
-                        throw new Error(errorData.message || 'Erro desconhecido');
-                    } catch (e) {
-                        throw new Error('Erro ao processar resposta: ' + text);
-                    }
+    }
+
+    // Definir endereço como padrão
+    function definirEnderecoPadrao(index) {
+        fetch('/api/cliente/auth/status')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.autenticado) {
+                    window.location.href = '/loja/login-cliente';
+                    throw new Error('Sessão expirada');
+                }
+                return fetch(`/api/cliente/endereco/${index}/padrao`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' }
                 });
-            }
-            return response.json();
-        })
-        .then(data => {
-            renderizarEnderecos(data.enderecosEntrega);
-            mostrarSucesso('Endereço padrão definido com sucesso!');
-        })
-        .catch(error => {
-            console.error('Erro ao definir endereço padrão:', error);
-            try {
-                if (error.message) {
-                    mostrarErro(error.message);
-                } else {
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        try {
+                            const errorData = JSON.parse(text);
+                            throw new Error(errorData.message || 'Erro desconhecido');
+                        } catch {
+                            throw new Error('Erro ao processar resposta: ' + text);
+                        }
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                renderizarEnderecos(data.enderecosEntrega);
+                mostrarSucesso('Endereço padrão definido com sucesso!');
+            })
+            .catch(error => {
+                console.error('Erro ao definir endereço padrão:', error);
+                try {
+                    if (error.message) {
+                        mostrarErro(error.message);
+                    } else {
+                        mostrarErro('Erro ao definir endereço padrão. Por favor, tente novamente.');
+                    }
+                } catch {
                     mostrarErro('Erro ao definir endereço padrão. Por favor, tente novamente.');
                 }
-            } catch (e) {
-                mostrarErro('Erro ao definir endereço padrão. Por favor, tente novamente.');
-            }
-        });
-}
-
-// Fazer logout
-function fazerLogout() {
-    fetch('/api/cliente/auth/logout', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => {
-        console.log('Response status fazerLogout:', response.status);
-        if (!response.ok) {
-            return response.text().then(text => {
-                console.log('Error response text:', text);
-                try {
-                    const errorData = JSON.parse(text);
-                    throw new Error(errorData.message || 'Erro desconhecido');
-                } catch (e) {
-                    throw new Error('Erro ao processar resposta: ' + text);
-                }
             });
-        }
-        return response.json();
-    })
-    .then(data => {
-        // Redirecionar para a página inicial após logout
-        window.location.href = '/loja';
-    })
-    .catch(error => {
-        console.error('Erro ao fazer logout:', error);
-        try {
-            if (error.message) {
-                alert(error.message);
-            } else {
-                alert('Erro ao fazer logout. Por favor, tente novamente.');
-            }
-        } catch (e) {
-            alert('Erro ao fazer logout. Por favor, tente novamente.');
-        }
-        // Tentar redirecionar mesmo com erro
-        window.location.href = '/loja';
-    });
-}
+    }
+
+    // Carregar “Meus Pedidos” apenas na primeira vez que o usuário clicar na aba
+    function carregarMeusPedidos() {
+        if (pedidosJaCarregados) return;
+        pedidosJaCarregados = true;
+
+        // Exibe o spinner, esconde conteúdo e mensagem “nenhum pedido”
+        document.getElementById('spinnerPedidos').style.display = 'block';
+        document.getElementById('conteudoPedidos').style.display = 'none';
+        document.getElementById('naoTemPedidos').style.display = 'none';
+
+        fetch('/api/cliente/pedidos')
+            .then(response => {
+                console.log('Response status carregarMeusPedidos:', response.status);
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = '/loja/login-cliente';
+                        throw new Error('Usuário não autenticado');
+                    }
+                    return response.text().then(text => {
+                        try {
+                            const errorData = JSON.parse(text);
+                            throw new Error(errorData.message || 'Erro desconhecido');
+                        } catch {
+                            throw new Error('Erro ao processar resposta: ' + text);
+                        }
+                    });
+                }
+                return response.json();
+            })
+            .then(pedidos => {
+                // Se não há pedidos
+                if (!pedidos || pedidos.length === 0) {
+                    document.getElementById('spinnerPedidos').style.display = 'none';
+                    document.getElementById('naoTemPedidos').style.display = 'block';
+                    return;
+                }
+                const tbody = document.getElementById('corpoTabelaPedidos');
+                tbody.innerHTML = '';
+
+                pedidos.forEach(pedido => {
+                    const tr = document.createElement('tr');
+
+                    // Número do pedido
+                    const tdNumero = document.createElement('td');
+                    tdNumero.textContent = pedido.numeroPedido || '-';
+                    tr.appendChild(tdNumero);
+
+                    // Data de criação (formata ISO para dd/mm/aaaa)
+                    const tdData = document.createElement('td');
+                    if (pedido.dataCriacao) {
+                        const d = new Date(pedido.dataCriacao);
+                        const dia = String(d.getDate()).padStart(2, '0');
+                        const mes = String(d.getMonth() + 1).padStart(2, '0');
+                        const ano = d.getFullYear();
+                        tdData.textContent = `${dia}/${mes}/${ano}`;
+                    } else {
+                        tdData.textContent = '-';
+                    }
+                    tr.appendChild(tdData);
+
+                    // Status
+                    const tdStatus = document.createElement('td');
+                    tdStatus.textContent = pedido.status || '-';
+                    tr.appendChild(tdStatus);
+
+                    // Total
+                    const tdTotal = document.createElement('td');
+                    tdTotal.textContent = pedido.total != null ? pedido.total.toFixed(2) : '-';
+                    tr.appendChild(tdTotal);
+
+                    // Ações (ex: link para detalhes)
+                    const tdAcoes = document.createElement('td');
+                    tdAcoes.innerHTML = `<a href="/loja/pedido/${pedido.numeroPedido}" class="btn btn-sm btn-primary">Ver Detalhes</a>`;
+                    tr.appendChild(tdAcoes);
+
+                    tbody.appendChild(tr);
+                });
+
+                // Exibe a tabela
+                document.getElementById('spinnerPedidos').style.display = 'none';
+                document.getElementById('conteudoPedidos').style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Erro ao carregar pedidos:', error);
+                mostrarErro('Não foi possível obter seus pedidos. Tente novamente mais tarde.');
+                document.getElementById('spinnerPedidos').style.display = 'none';
+            });
+    }
+
+    // Fazer logout
+    function fazerLogout() {
+        fetch('/api/cliente/auth/logout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+            .then(response => {
+                console.log('Response status fazerLogout:', response.status);
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        try {
+                            const errorData = JSON.parse(text);
+                            throw new Error(errorData.message || 'Erro desconhecido');
+                        } catch {
+                            throw new Error('Erro ao processar resposta: ' + text);
+                        }
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                window.location.href = '/loja';
+            })
+            .catch(error => {
+                console.error('Erro ao fazer logout:', error);
+                try {
+                    if (error.message) {
+                        alert(error.message);
+                    } else {
+                        alert('Erro ao fazer logout. Por favor, tente novamente.');
+                    }
+                } catch {
+                    alert('Erro ao fazer logout. Por favor, tente novamente.');
+                }
+                window.location.href = '/loja';
+            });
+    }
 </script>
 </body>
 

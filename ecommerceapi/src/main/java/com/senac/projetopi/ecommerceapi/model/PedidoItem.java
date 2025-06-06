@@ -3,9 +3,6 @@ package com.senac.projetopi.ecommerceapi.model;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 
-/**
- * Entidade que representa um item dentro de um pedido.
- */
 @Entity
 @Table(name = "pedido_itens")
 public class PedidoItem {
@@ -14,42 +11,30 @@ public class PedidoItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * ID do produto que está sendo pedido.
-     * Não estamos mapeando relacionamento direto com a entidade Produto,
-     * apenas armazenamos o ID e alguns dados de nome/preço unitário para facilitar.
-     */
+    /** ID do produto referente a este item. */
     @Column(name = "produto_id", nullable = false)
     private Long produtoId;
 
-    /**
-     * Nome do produto (copiado no momento da criação do pedido, para histórico).
-     */
-    @Column(name = "nome", nullable = false)
-    private String nome;
-
-    /**
-     * Quantidade deste item no pedido.
-     */
+    /** Quantidade desse produto neste pedido */
     @Column(nullable = false)
-    private int quantidade;
+    private Integer quantidade;
 
-    /**
-     * Preço unitário do produto no momento do pedido.
-     */
+    /** Preço unitário ao qual se vendeu este item */
     @Column(name = "preco_unitario", nullable = false)
     private BigDecimal precoUnitario;
 
+    /** Subtotal deste item, ou seja (preçoUnitário × quantidade) */
+    @Column(name = "subtotal", nullable = false)
+    private BigDecimal subtotal;
+
     /**
-     * Referência de volta para o Pedido ao qual este item pertence.
+     * Relacionamento MANY-TO-ONE → muitos itens pertencem a um pedido.
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pedido_id", nullable = false)
     private Pedido pedido;
 
-    // ============================
-    // Getters e Setters
-    // ============================
+    // ========= Getters e Setters ========
 
     public Long getId() {
         return id;
@@ -67,19 +52,11 @@ public class PedidoItem {
         this.produtoId = produtoId;
     }
 
-    public String getNome() {
-        return nome;
-    }
-
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
-
-    public int getQuantidade() {
+    public Integer getQuantidade() {
         return quantidade;
     }
 
-    public void setQuantidade(int quantidade) {
+    public void setQuantidade(Integer quantidade) {
         this.quantidade = quantidade;
     }
 
@@ -91,18 +68,19 @@ public class PedidoItem {
         this.precoUnitario = precoUnitario;
     }
 
+    public BigDecimal getSubtotal() {
+        return subtotal;
+    }
+
+    public void setSubtotal(BigDecimal subtotal) {
+        this.subtotal = subtotal;
+    }
+
     public Pedido getPedido() {
         return pedido;
     }
 
     public void setPedido(Pedido pedido) {
         this.pedido = pedido;
-    }
-
-    /**
-     * Retorna o subtotal deste item (precoUnitario * quantidade).
-     */
-    public BigDecimal getSubtotal() {
-        return this.precoUnitario.multiply(BigDecimal.valueOf(this.quantidade));
     }
 }

@@ -1,3 +1,4 @@
+<!-- src/main/resources/templates/dashboard.html -->
 <!DOCTYPE html>
 <html lang="pt-br"
       xmlns:th="http://www.thymeleaf.org"
@@ -28,7 +29,7 @@
             </div>
 
             <div class="row mt-4">
-                <!-- só ADMIN vê este card -->
+                <!-- somente ADMIN vê este card -->
                 <div class="col-md-4 mb-4" sec:authorize="hasRole('ADMIN')">
                     <div class="card border-primary">
                         <div class="card-body text-center">
@@ -39,7 +40,8 @@
                         </div>
                     </div>
                 </div>
-                <!-- ADMIN e ESTOQUISTA veem este -->
+
+                <!-- ADMIN e ESTOQUISTA veem este card -->
                 <div class="col-md-4 mb-4" sec:authorize="hasAnyRole('ADMIN','ESTOQUISTA')">
                     <div class="card border-success">
                         <div class="card-body text-center">
@@ -50,7 +52,20 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Somente ESTOQUISTA vê este card -->
+                <div class="col-md-4 mb-4" sec:authorize="hasRole('ESTOQUISTA')">
+                    <div class="card border-warning">
+                        <div class="card-body text-center">
+                            <i class="bi bi-list-ul fs-1 text-warning"></i>
+                            <h5 class="card-title mt-3">Lista de Pedidos</h5>
+                            <p class="card-text">Visualizar e alterar status dos pedidos</p>
+                            <a href="/loja/pedidos" class="btn btn-warning">Acessar</a>
+                        </div>
+                    </div>
+                </div>
             </div>
+
         </div>
     </div>
 </div>

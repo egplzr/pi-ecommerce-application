@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Entidade que representa um pedido de compra.
+ * Representa um Pedido no banco.
  */
 @Entity
 @Table(name = "pedidos")
@@ -16,35 +16,27 @@ public class Pedido {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * Número único do pedido (por exemplo, gerado com UUID curto).
-     */
+    /** Número único do pedido, gerado no back-end (p. ex. UUID curto). */
     @Column(name = "numero_pedido", unique = true, nullable = false)
     private String numeroPedido;
 
-    /**
-     * Data e hora de criação do pedido.
-     */
+    /** Data/hora de criação do pedido. */
     @Column(name = "data_criacao", nullable = false)
     private LocalDateTime dataCriacao;
 
-    /**
-     * Valor total (soma de todos os itens) do pedido.
-     */
+    /** Valor total do pedido (soma de todos os itens). */
     @Column(nullable = false)
     private BigDecimal total;
 
-    /**
-     * Status do pedido (enum: AGUARDANDO_PAGAMENTO, NO_PREPARO, ENVIADO, ENTREGUE, CANCELADO).
-     */
+    /** Status do pedido. */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private StatusPedido status;
 
     /**
-     * Endereço de entrega. Como a entidade mapeia List<String>, gravamos cada string como um elemento.
-     * Neste cenário, estamos armazenando apenas um endereço (por questão de simplicidade),
-     * mas pode-se posteriormente adicionar lógica para múltiplos endereços.
+     * Endereço de entrega.
+     * No front-end mandamos apenas UMA string completa, mas armazenamos aqui
+     * como ElementCollection <String> para a simplicidade da solução.
      */
     @ElementCollection
     @CollectionTable(
@@ -54,29 +46,23 @@ public class Pedido {
     @Column(name = "endereco", nullable = false)
     private List<String> endereco;
 
-    /**
-     * Forma de pagamento (por exemplo, "BOLETO" ou "CARTAO").
-     */
+    /** “BOLETO” ou “CARTAO” */
     @Column(name = "forma_pagamento", nullable = false)
     private String formaPagamento;
 
     /**
-     * Lista de itens que compõem este pedido. Cascade ALL para que, ao salvar o Pedido,
-     * os PedidoItem associados sejam salvos automaticamente.
+     * Itens que fazem parte deste pedido.
+     * Cascade ALL → ao salvar Pedido, seus itens também são salvos automaticamente.
      */
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PedidoItem> itens;
 
-    /**
-     * Cliente que fez este pedido. Chave estrangeira para a tabela clientes.
-     */
-    @ManyToOne
+    /** O cliente que fez este pedido */
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cliente_id", nullable = false)
     private Cliente cliente;
 
-    // ============================
-    // Getters e Setters
-    // ============================
+    // ================= Getters e Setters =================
 
     public Long getId() {
         return id;

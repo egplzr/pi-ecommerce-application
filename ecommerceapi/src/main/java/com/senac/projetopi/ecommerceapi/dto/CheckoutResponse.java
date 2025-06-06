@@ -1,5 +1,8 @@
 package com.senac.projetopi.ecommerceapi.dto;
 
+/**
+ * Apenas devolve o número de pedido gerado (por exemplo, “AB12CD34”), sem expor toda a entidade.
+ */
 public class CheckoutResponse {
     private String numeroPedido;
 
